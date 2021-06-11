@@ -13,6 +13,7 @@ namespace Diffusion2D_Library
         public RMatrix FinalComposition;
         public RMatrix xposition_matrix;
         public RMatrix yposition_matrix;
+        public RMatrix DiffusionCoefficient;
 
         public CompositionField2D(int nx, int ny)
         {
@@ -20,6 +21,7 @@ namespace Diffusion2D_Library
             FinalComposition = new(nx, ny);
             xposition_matrix = new(nx, ny);
             yposition_matrix = new(nx, ny);
+            DiffusionCoefficient = new(nx, ny);
         }
     }
 
