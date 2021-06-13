@@ -69,7 +69,6 @@ namespace Diffusion2D_Library
             top,
             bottom
         }
-
         public enum Mode { Quiet, Verbose }
         public struct Boundary
         {
