@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Diffusion2D_Library
 {
-    class DiffusionSimulators_2D_MatrixD
+   public class DiffusionSimulators_2D_MatrixD
     {
         public struct CompositionField2D
         {

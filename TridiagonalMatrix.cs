@@ -50,6 +50,8 @@ namespace Diffusion2D_Library
             {
                 this.lower = lower;
             }
+            this.nRows = main.GetRVectorSize;
+            this.nCols = main.GetRVectorSize;
 
         }
         public TridiagonalMatrix(int N, double mainDiagonal, double upperVec, double lowerVec)
