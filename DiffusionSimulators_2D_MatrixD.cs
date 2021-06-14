@@ -92,7 +92,7 @@ namespace Diffusion2D_Library
         private readonly double dy;
         private CompositionField2D CF_2D;
         private Boundary[] border;
-        private Mode chat_mode;
+        private Mode text_mode;
         private TridiagonalMatrix[] A;
         private TridiagonalMatrix[] B;
 
@@ -131,10 +131,10 @@ namespace Diffusion2D_Library
             get { return border; }
             set { border = value; }
         }
-        public Mode Chat_mode
+        public Mode Text_mode
         {
-            get { return chat_mode; }
-            set { chat_mode = value; }
+            get { return text_mode; }
+            set { text_mode = value; }
         }
 
         // Constructors
@@ -156,23 +156,33 @@ namespace Diffusion2D_Library
                 }
             });
 
-            this.A = new TridiagonalMatrix[nx];
-            this.B = new TridiagonalMatrix[nx];
+            C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
+            this.I0 = I0;
 
-            double off_d_val = nu;
-            double diag_val = 1 - (2 * nu);
+            A = new TridiagonalMatrix[nx];
+            B = new TridiagonalMatrix[nx];
 
             double nu0 = dt / (2 * Math.Pow(dx, 2));
-            RVector nu = new(nx);
-            RVector off_d_val = new(nx - 1); ;
-            RVector main = new(nx);
-            for (int i = 0; i < nx; i++)
-            {
-                RVector D_row = D.GetRowVector(i);
-                nu = nu0 * D_row;
 
-                
-            }
+            RVector nu = new(nx);
+            RVector off_d_val_l = new(nx - 1);
+            RVector off_d_val_u = new(nx - 1);
+            RVector main = new(nx);
+
+            Parallel.For(0, nx, i =>
+           {
+               RVector D_row = D.GetRowVector(i);
+               nu = nu0 * D_row;
+               main = 1 - (2 * nu);
+
+               for (int j = 0; j < nx - 1; j++) { off_d_val_l[j] = nu[j]; }
+               for (int j = 1; j < nx; j++) { off_d_val_u[j - 1] = nu[j]; }
+
+               A[i] = new TridiagonalMatrix(main, off_d_val_l, off_d_val_u);
+
+               main = 1 + (2 * nu);
+               B[i] = new TridiagonalMatrix(main, -off_d_val_l, -off_d_val_u);
+           });
 
             C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
             this.I0 = I0;
@@ -245,14 +255,14 @@ namespace Diffusion2D_Library
             }
 
             gxt = g;
-            Chat_mode = Mode.Quiet;
+            Text_mode = Mode.Quiet;
         }
 
         // Solvers
         /// <summary>
         /// Method for solving the 2D diffusion equation using the Alternating Direction Implicit algorithm
         /// </summary>
-        /// <param name="n_time_steps">Integer specifying the number of time-steps to take during the simulation</param>
+        /// <param name="n_time_steps"></param>
         public void TwoD_ADI(int n_time_steps)
         {
             int nrows = CF_2D.InitialComposition.GetnRows;
@@ -271,22 +281,22 @@ namespace Diffusion2D_Library
             RVector CT = new(ncols);
             RVector CB = new(ncols);
 
-            double nu = dt / (2 * Math.Pow(dx, 2));
+            double nu0 = dt / (2 * Math.Pow(dx, 2));
 
-            // Define the A matrix for the explicit steps
-            double off_d_val = nu;
-            double diag_val = 1 - (2 * nu);
-            TridiagonalMatrix A = new(ncols, diag_val, off_d_val, off_d_val);
+            //// Define the A matrix for the explicit steps
+            //double off_d_val = nu;
+            //double diag_val = 1 - (2 * nu);
+            //TridiagonalMatrix A = new(ncols, diag_val, off_d_val, off_d_val);
 
-            // Define the B matrices for the implicit steps
-            off_d_val = -nu;
-            diag_val = 1 + (2 * nu);
-            TridiagonalMatrix B = new(nrows, diag_val, off_d_val, off_d_val);
-                        
+            //// Define the B matrices for the implicit steps
+            //off_d_val = -nu;
+            //diag_val = 1 + (2 * nu);
+            //TridiagonalMatrix B = new(nrows, diag_val, off_d_val, off_d_val);
+
             // Time evolution           
             for (int t = 0; t < n_time_steps; t++)
             {
-                if (Chat_mode == Mode.Verbose)
+                if (Text_mode == Mode.Verbose)
                 {
                     if (t % 10 == 0) { Console.WriteLine(t * dt); }
                 }
@@ -329,9 +339,13 @@ namespace Diffusion2D_Library
                             cUpper2 = C_Im2[nrows - 2, ncols - 2];
                         }
                         //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                        CR = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
-                        CR[0] = ((-2 * nu) * cLower1) + ((2 * nu) * cLower2);
-                        CR[ncols - 1] = ((-2 * nu) * cUpper1) + ((2 * nu) * cUpper2);
+                        //CR = ((-2 * nu0) * C1) + ((2 * nu0) * C2); // + C3
+                        //CR[0] = ((-2 * nu0) * cLower1) + ((2 * nu0) * cLower2);
+                        //CR[ncols - 1] = ((-2 * nu0) * cUpper1) + ((2 * nu0) * cUpper2);
+
+                        CR = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols - 1), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols - 2), C2); // + C3
+                        CR[0] = ((-2 * nu0 * CF_2D.DiffusionCoefficient[0, ncols - 1]) * cLower1) + ((2 * nu0 * CF_2D.DiffusionCoefficient[1, ncols - 2]) * cLower2);
+                        CR[ncols - 1] = ((-2 * nu0 * CF_2D.DiffusionCoefficient[nrows - 1, ncols - 1]) * cUpper1) + ((2 * nu0 * CF_2D.DiffusionCoefficient[nrows - 2, ncols - 2]) * cUpper2);
                         break;
                     case BoundaryConditions.Mixed:
                         break;
@@ -369,9 +383,10 @@ namespace Diffusion2D_Library
                             cUpper2 = C_Im2[nrows - 2, 1];
                         }
                         //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                        CL = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
-                        CL[0] = ((-2 * nu) * cLower1) + ((2 * nu) * cLower2);
-                        CL[ncols - 1] = ((-2 * nu) * cUpper1) + ((2 * nu) * cUpper2);
+
+                        CL = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(0),C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(1), C2); // + C3
+                        CL[0] = ((-2 * nu0 * CF_2D.DiffusionCoefficient[0,0]) * cLower1) + ((2 * nu0 * CF_2D.DiffusionCoefficient[1, 1]) * cLower2);
+                        CL[ncols - 1] = ((-2 * nu0 * CF_2D.DiffusionCoefficient[nrows - 1, 0]) * cUpper1) + ((2 * nu0 * CF_2D.DiffusionCoefficient[nrows - 2, 1]) * cUpper2);
                         break;
                     case BoundaryConditions.Mixed:
                         break;
@@ -386,7 +401,7 @@ namespace Diffusion2D_Library
                     if (t == 0) { xold = C_Initial.GetRowVector(i); }
                     else { xold = C_Im2.GetRowVector(i); } // C_Im2.GetRowVector(i); }
 
-                    RVector v1 = A.Dot(xold);
+                    RVector v1 = A[i].Dot(xold);
                     C_Ex.ReplaceRow(v1, i);
                     C_Ex[i, 0] = CL[i]; //nu *
                     C_Ex[i, ncols - 1] = CR[i]; //nu *                    
@@ -397,8 +412,8 @@ namespace Diffusion2D_Library
                 // ===================
                 // Source terms
                 double t12 = (t + 0.5) * dt;
-                if (t == 0) { fn = gxt(X, Y, t12, D, C_Initial); }
-                else { fn = gxt(X, Y, t12, D, C_Im2); }
+                if (t == 0) { fn = gxt(X, Y, t12, CF_2D.DiffusionCoefficient, C_Initial); }
+                else { fn = gxt(X, Y, t12, CF_2D.DiffusionCoefficient, C_Im2); }
 
                 f12 = (dt / 2.0) * fn;
 
@@ -408,7 +423,7 @@ namespace Diffusion2D_Library
                     case BoundaryConditions.Dirichlet:
                         RVector gn = BCs[0].BoundaryFunction((t + 1) * dt, BCs[0].PositionVaries, BCs[0].PositionFixed);
                         RVector g0 = BCs[0].BoundaryFunction(t * dt, BCs[0].PositionVaries, BCs[0].PositionFixed);
-                        CT = ((0.5 * B.Dot(gn)) + (0.5 * A.Dot(g0))); ////((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
+                        CT = ((0.5 * B[nrows-1].Dot(gn)) + (0.5 * A[nrows-1].Dot(g0))); ////((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
                         break;
                     case BoundaryConditions.Neumann:
                         RVector C1, C2; //,C3;
@@ -423,7 +438,7 @@ namespace Diffusion2D_Library
                             C2 = C_Im2.GetRowVector(nrows - 2);
                         }
                         //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                        CT = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
+                        CT = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetRowVector(nrows-1), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetRowVector(nrows-2), C2); // + C3
                         break;
                     case BoundaryConditions.Mixed:
                         break;
@@ -437,7 +452,7 @@ namespace Diffusion2D_Library
                     case BoundaryConditions.Dirichlet:
                         RVector gn = BCs[3].BoundaryFunction((t + 1) * dt, BCs[3].PositionVaries, BCs[3].PositionFixed);
                         RVector g0 = BCs[3].BoundaryFunction(t * dt, BCs[3].PositionVaries, BCs[3].PositionFixed);
-                        CB = ((0.5 * B.Dot(gn)) + (0.5 * A.Dot(g0))); //((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
+                        CB = ((0.5 * B[0].Dot(gn)) + (0.5 * A[0].Dot(g0))); //((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
                         break;
                     case BoundaryConditions.Neumann:
                         RVector C1, C2; //,C3;
@@ -452,7 +467,7 @@ namespace Diffusion2D_Library
                             C2 = C_Im2.GetRowVector(1);
                         }
                         //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                        CB = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
+                        CB = RVector.Product(-2 * nu0*CF_2D.DiffusionCoefficient.GetRowVector(0), C1) + RVector.Product(2 * nu0*CF_2D.DiffusionCoefficient.GetRowVector(1), C2); // + C3
                         break;
                     case BoundaryConditions.Mixed:
                         break;
@@ -469,7 +484,7 @@ namespace Diffusion2D_Library
 
                     RVector f12s = f12.GetColVector(j); // 
 
-                    RVector u12 = TridiagonalMatrix.Thomas_Algorithm(B, v1 + f12s);               
+                    RVector u12 = TridiagonalMatrix.Thomas_Algorithm(B[j], v1 + f12s);               
                     C_Im1.ReplaceCol(u12, j);
                 });
                 // ===================
@@ -497,7 +512,7 @@ namespace Diffusion2D_Library
                             C2 = C_Im2.GetColVector(ncols - 2);
                         }
                         //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                        CR = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
+                        CR = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols-1), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols-2), C2); // + C3
                         break;
                     case BoundaryConditions.Mixed:
                         break;
@@ -529,7 +544,7 @@ namespace Diffusion2D_Library
                             C2 = C_Im2.GetColVector(1);
                         }
                         //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                        CL = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
+                        CL = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(0), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(1), C2); // + C3
                         break;
                     case BoundaryConditions.Mixed:
                         break;
@@ -546,14 +561,14 @@ namespace Diffusion2D_Library
                     b[0] = CL[k]; //nu * 
                     b[ncols - 1] = CR[k]; //nu * 
 
-                    RVector u1 = TridiagonalMatrix.Thomas_Algorithm(B, b);
+                    RVector u1 = TridiagonalMatrix.Thomas_Algorithm(B[k], b);
                     u1[0] = CL[k];  //nu * 
                     u1[ncols - 1] = CR[k]; //nu * 
                     C_Im2.ReplaceRow(u1, k);
                 });
                 // ===================
 
-                if (Chat_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
+                if (Text_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
 
             }
 

@@ -383,11 +383,6 @@ namespace Diffusion2D_Library
                     if (t % 10 == 0) { Console.WriteLine(t * dt); }
                 }
 
-                //if (t == n_time_steps - 1)
-                //{
-                //    Console.WriteLine(t);
-                //}
-
                 // ===================
                 // Explicit time-step
                 // ===================
