@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.1.0</Version>
+    <Version>0.1.4</Version>
     <Description>Solves the parabolic partial differential equation for diffusion or heat ransfer in 1 or 2 dimensions.</Description>
     <PackageIcon>2D_Region.png</PackageIcon>
     <PackageIconUrl />
@@ -12,6 +12,7 @@
     <RepositoryUrl>https://github.com/sap8b/Diffusion2D_Library</RepositoryUrl>
     <RepositoryType>GitHub</RepositoryType>
     <PackageTags>Diffusion, PDE, Modeling, Corrosion</PackageTags>
+    <ApplicationIcon>CfieldIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
