@@ -46,7 +46,7 @@ namespace Diffusion2D_Library
         /// <param name="time"></param>
         /// <param name="composition"></param>
         /// <returns>A matrix of composition values</returns>
-        public delegate RMatrix SourceTerm_Del(RMatrix xposition, RMatrix yposition, double time, double DiffCoeff, RMatrix composition);
+        public delegate RMatrix SourceTerm_Del(RMatrix xposition, RMatrix yposition, double time, RMatrix DiffCoeff, RMatrix composition);
         /// <summary>
         /// Delegate for calculating sources/sinks for reactions occurring in a 2D composition field with diffusivity as a matrix
         /// </summary>
