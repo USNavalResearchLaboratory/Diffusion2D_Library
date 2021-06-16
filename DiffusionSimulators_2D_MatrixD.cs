@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Diffusion2D_Library
 {
+    /// <summary>
+    /// This class simulates diffusion in a 2D region with a non-constant diffusion coefficient 
+    /// </summary>
    public class DiffusionSimulators_2D_MatrixD
     {
         public struct CompositionField2D
