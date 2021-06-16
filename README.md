@@ -2,6 +2,8 @@
 <img src = "images/Cfield1.png" width="100" align ="right">
 Solves the diffusion equation in 1 or 2 dimensions.
 
+***
+
 <img src="2D_Region.png" width="400" align = "right">
 "Diffusion2D_Library" is a C# library for solving parabolic partial differential equations in 1 or 2 dimensions.  A representative region, &Omega;, in the cartesian plane, with boundary conditions specified on &delta;&Omega; and initial condition indicated, is shown to the right.  
 
