@@ -1,5 +1,5 @@
 # Diffusion2D_Library
-<img src = "../images/Cfield1.png" width="100" align ="right">
+<img src = "images/Cfield1.png" width="100" align ="right">
 Solves the diffusion equation in 1 or 2 dimensions.
 
 <img src="2D_Region.png" width="400" align = "right">
