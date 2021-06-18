@@ -731,7 +731,7 @@ namespace Diffusion2D_Library
             {
                 if (Text_mode == Mode.Verbose && output_interval > 0)
                 {
-                    if (t % output_interval == 0) { Console.WriteLine("{1}s have been simulated",t * dt); }
+                    if (t % output_interval == 0) { Console.WriteLine("{0}s have been simulated",t * dt); }
                 }
 
                 // ===================
