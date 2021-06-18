@@ -90,6 +90,9 @@ namespace Diffusion2D_Library
         }
 
         // Fields
+        private string b_filename;
+        private const string suffix = ".csv";
+
         private readonly double dt;
         private readonly double dx;
         private readonly double dy;
@@ -138,6 +141,11 @@ namespace Diffusion2D_Library
         {
             get { return text_mode; }
             set { text_mode = value; }
+        }
+        public string Base_filename
+        {
+            get { return b_filename;}
+            set { b_filename = value; }
         }
 
         // Constructors
@@ -262,7 +270,7 @@ namespace Diffusion2D_Library
         }
 
         public DiffusionSimulators_2D_MatrixD(RMatrix D, double dx, double dy, int nx, int ny, double dt, int nt,
-    string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_MatrixD_Del g, Mode Tmode)
+    string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_MatrixD_Del g, Mode Tmode, string base_filename)
         {
             this.dx = dx;
             this.dy = dy;
@@ -379,6 +387,7 @@ namespace Diffusion2D_Library
 
             gxt = g;
             Text_mode = Tmode;
+            b_filename = base_filename;
         }
 
         // Solvers
@@ -725,13 +734,21 @@ namespace Diffusion2D_Library
             RVector CB = new(ncols);
 
             double nu0 = dt / (2 * Math.Pow(dx, 2));
-
+            string full_file_name;
             // Time evolution           
             for (int t = 0; t < n_time_steps; t++)
             {
-                if (Text_mode == Mode.Verbose && output_interval > 0)
+                if (Text_mode == Mode.Verbose && output_interval > 0 && Base_filename != null)
                 {
-                    if (t % output_interval == 0) { Console.WriteLine("{0}s have been simulated",t * dt); }
+                    if (t % output_interval == 0) 
+                    {
+                        decimal time = (decimal)(t * dt);
+                        Console.WriteLine("{0}s have been simulated", time);
+                        full_file_name = Base_filename + time.ToString() + suffix;
+                        if (File.Exists(full_file_name)) { File.Delete(full_file_name); }
+                        if (t == 0) { FileWriteData_CSV(full_file_name, X, Y, C_Initial); }
+                        else { FileWriteData_CSV(full_file_name, X, Y, C_Im2); }                        
+                    }
                 }
 
                 // ===================
@@ -997,8 +1014,6 @@ namespace Diffusion2D_Library
                     C_Im2.ReplaceRow(u1, k);
                 }
                 // ===================
-
-                if (Text_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
 
             }
 
