@@ -261,6 +261,126 @@ namespace Diffusion2D_Library
             Text_mode = Mode.Quiet;
         }
 
+        public DiffusionSimulators_2D_MatrixD(RMatrix D, double dx, double dy, int nx, int ny, double dt, int nt,
+    string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_MatrixD_Del g, Mode Tmode)
+        {
+            this.dx = dx;
+            this.dy = dy;
+            this.dt = dt;
+            CF_2D = new CompositionField2D(ny, nx);
+
+            for (int i = 0; i < ny; i++)
+            {
+                for (int j = 0; j < nx; j++)
+                {
+                    CF_2D.xposition_matrix[j, i] = i * dx;
+                    CF_2D.yposition_matrix[j, i] = j * dy;
+                    CF_2D.DiffusionCoefficient[j, i] = D[j, i];
+                }
+            }
+
+            C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
+            this.I0 = I0;
+
+            A = new TridiagonalMatrix[nx];
+            B = new TridiagonalMatrix[nx];
+
+            double nu0 = dt / (2 * Math.Pow(dx, 2));
+
+            RVector nu = new(nx);
+            RVector off_d_val_l = new(nx - 1);
+            RVector off_d_val_u = new(nx - 1);
+            RVector main = new(nx);
+
+            for (int i = 0; i < nx; i++)
+            {
+                RVector D_row = D.GetRowVector(i);
+                nu = nu0 * D_row;
+                main = 1 - (2 * nu);
+
+                for (int j = 0; j < nx - 1; j++) { off_d_val_l[j] = nu[j]; }
+                for (int j = 1; j < nx; j++) { off_d_val_u[j - 1] = nu[j]; }
+
+                A[i] = new TridiagonalMatrix(main, off_d_val_l, off_d_val_u);
+
+                main = 1 + (2 * nu);
+                B[i] = new TridiagonalMatrix(main, -off_d_val_l, -off_d_val_u);
+            }
+
+            C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
+            this.I0 = I0;
+
+            int num_bounds = Boundary_Conditions.Length;
+            border = new Boundary[num_bounds];
+            RVector C0;
+            for (int i = 0; i < num_bounds; i++)
+            {
+                border[i] = new Boundary
+                {
+                    BoundaryLocation = i switch
+                    {
+                        0 => BoundingBox.top,
+                        1 => BoundingBox.right,
+                        2 => BoundingBox.left,
+                        3 => BoundingBox.bottom,
+                        _ => BoundingBox.bottom,
+                    },
+                    TypeBC = ConvertStringToEnumBC(Boundary_Conditions[i]),
+                    BoundaryFunction = bc_s[i]
+                };
+                switch (border[i].BoundaryLocation)
+                {
+                    case BoundingBox.top:
+                        if (border[i].TypeBC == BoundaryConditions.Dirichlet)
+                        {
+                            border[i].PositionVaries = X.GetRowVector(X.GetnRows - 1);
+                            border[i].PositionFixed = Y[X.GetnRows - 1, 0];
+                            C0 = border[i].BoundaryFunction(0.0, border[i].PositionVaries, border[i].PositionFixed);
+
+                            RVector Ctab = C_Initial.GetRowVector(ny - 1) + C0;
+                            C_Initial.ReplaceRow(C0, ny - 1);
+                        }
+                        break;
+                    case BoundingBox.right:
+                        if (border[i].TypeBC == BoundaryConditions.Dirichlet)
+                        {
+                            border[i].PositionVaries = Y.GetColVector(0);
+                            border[i].PositionFixed = X[0, Y.GetnCols - 1];
+                            C0 = border[i].BoundaryFunction(0.0, border[i].PositionVaries, border[i].PositionFixed);
+
+                            RVector Ctab = C_Initial.GetColVector(nx - 1) + C0;
+                            C_Initial.ReplaceCol(C0, nx - 1);
+                        }
+                        break;
+                    case BoundingBox.left:
+                        if (border[i].TypeBC == BoundaryConditions.Dirichlet)
+                        {
+                            border[i].PositionVaries = Y.GetColVector(0);
+                            border[i].PositionFixed = X[0, 0];
+                            C0 = border[i].BoundaryFunction(0.0, border[i].PositionVaries, border[i].PositionFixed);
+
+                            RVector Ctab = C_Initial.GetColVector(0) + C0;
+                            C_Initial.ReplaceCol(C0, 0);
+                        }
+                        break;
+                    case BoundingBox.bottom:
+                        if (border[i].TypeBC == BoundaryConditions.Dirichlet)
+                        {
+                            border[i].PositionVaries = X.GetRowVector(X.GetnRows - 1);
+                            border[i].PositionFixed = Y[0, 0];
+                            C0 = border[i].BoundaryFunction(0.0, border[i].PositionVaries, border[i].PositionFixed);
+
+                            RVector Ctab = C_Initial.GetRowVector(0) + C0;
+                            C_Initial.ReplaceRow(C0, 0);
+                        }
+                        break;
+                }
+            }
+
+            gxt = g;
+            Text_mode = Tmode;
+        }
+
         // Solvers
         /// <summary>
         /// Method for solving the 2D diffusion equation using the Alternating Direction Implicit algorithm
@@ -518,6 +638,311 @@ namespace Diffusion2D_Library
                         }
                         //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
                         CR = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols-1), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols-2), C2); // + C3
+                        break;
+                    case BoundaryConditions.Mixed:
+                        break;
+                    case BoundaryConditions.Unknown:
+                        break;
+                    default:
+                        break;
+                }
+                switch (BCs[2].TypeBC)
+                {
+                    case BoundaryConditions.Dirichlet:
+                        CL = BCs[2].BoundaryFunction((t + 1) * dt, BCs[2].PositionVaries, BCs[2].PositionFixed);
+                        CB = BCs[3].BoundaryFunction((t + 1) * dt, BCs[3].PositionVaries, BCs[3].PositionFixed);
+
+                        RVector ctab = C_Initial.GetRowVector(nrows - 1);
+
+                        C_Im2.ReplaceRow(CB, 0);
+                        break;
+                    case BoundaryConditions.Neumann:
+                        RVector C1, C2; //,C3;
+                        if (t == 0)
+                        {
+                            C1 = C_Initial.GetColVector(0);
+                            C2 = C_Initial.GetColVector(1);
+                        }
+                        else
+                        {
+                            C1 = C_Im2.GetColVector(0);
+                            C2 = C_Im2.GetColVector(1);
+                        }
+                        //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
+                        CL = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(0), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(1), C2); // + C3
+                        break;
+                    case BoundaryConditions.Mixed:
+                        break;
+                    case BoundaryConditions.Unknown:
+                        break;
+                    default:
+                        break;
+                }
+                for (int k = 1; k < nrows - 1; k++)
+                {
+                    RVector v1 = C_Ex.GetRowVector(k);
+                    RVector u12 = C_Im1.GetRowVector(k);
+                    RVector b = (2 * u12) - v1;
+                    b[0] = CL[k]; //nu * 
+                    b[ncols - 1] = CR[k]; //nu * 
+
+                    RVector u1 = TridiagonalMatrix.Thomas_Algorithm(B[k], b);
+                    u1[0] = CL[k];  //nu * 
+                    u1[ncols - 1] = CR[k]; //nu * 
+                    C_Im2.ReplaceRow(u1, k);
+                }
+                // ===================
+
+                if (Text_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
+
+            }
+
+            // Setup the return composition field
+            C_Final = C_Im2;
+        }
+
+        /// <summary>
+        /// Method for solving the 2D diffusion equation using the Alternating Direction Implicit algorithm.  Will output time-steps elapsed.
+        /// </summary>
+        /// <param name="n_time_steps"></param>
+        /// <param name="output_interval"></param>
+        public void TwoD_ADI(int n_time_steps, int output_interval)
+        {
+            int nrows = CF_2D.InitialComposition.GetnRows;
+            int ncols = CF_2D.InitialComposition.GetnCols;
+
+            RMatrix C_Ex = new(nrows, ncols);
+            RMatrix C_Im1 = new(nrows, ncols);
+            RMatrix C_Im2 = new(nrows, ncols);
+
+            RMatrix fn = new(nrows, ncols);
+            RMatrix f0 = new(nrows, ncols);
+            RMatrix f12 = new(nrows, ncols);
+
+            RVector CL = new(nrows);
+            RVector CR = new(nrows);
+            RVector CT = new(ncols);
+            RVector CB = new(ncols);
+
+            double nu0 = dt / (2 * Math.Pow(dx, 2));
+
+            // Time evolution           
+            for (int t = 0; t < n_time_steps; t++)
+            {
+                if (Text_mode == Mode.Verbose && output_interval > 0)
+                {
+                    if (t % output_interval == 0) { Console.WriteLine("{1}s have been simulated",t * dt); }
+                }
+
+                // ===================
+                // Explicit time-step
+                // ===================
+                // 0 = top, 1 = right, 2 = left, 3 = bottom
+                switch (BCs[1].TypeBC)
+                {
+                    case BoundaryConditions.Dirichlet:
+                        CR = BCs[1].BoundaryFunction(t * dt, BCs[1].PositionVaries, BCs[1].PositionFixed);
+                        break;
+                    case BoundaryConditions.Neumann:
+                        RVector C1, C2; //,C3;
+                        double cUpper1, cUpper2, cLower1, cLower2;
+                        if (t == 0)
+                        {
+                            C1 = C_Initial.GetColVector(ncols - 1);
+                            C2 = C_Initial.GetColVector(ncols - 2);
+
+                            cLower1 = C_Initial[0, ncols - 1];
+                            cLower2 = C_Initial[1, ncols - 2];
+                            cUpper1 = C_Initial[nrows - 1, ncols - 1];
+                            cUpper2 = C_Initial[nrows - 2, ncols - 2];
+                        }
+                        else
+                        {
+                            C1 = C_Im2.GetColVector(ncols - 1);
+                            C2 = C_Im2.GetColVector(ncols - 2);
+
+                            cLower1 = C_Im2[0, ncols - 1];
+                            cLower2 = C_Im2[1, ncols - 2];
+                            cUpper1 = C_Im2[nrows - 1, ncols - 1];
+                            cUpper2 = C_Im2[nrows - 2, ncols - 2];
+                        }
+                        //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
+                        //CR = ((-2 * nu0) * C1) + ((2 * nu0) * C2); // + C3
+                        //CR[0] = ((-2 * nu0) * cLower1) + ((2 * nu0) * cLower2);
+                        //CR[ncols - 1] = ((-2 * nu0) * cUpper1) + ((2 * nu0) * cUpper2);
+
+                        CR = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols - 1), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols - 2), C2); // + C3
+                        CR[0] = ((-2 * nu0 * CF_2D.DiffusionCoefficient[0, ncols - 1]) * cLower1) + ((2 * nu0 * CF_2D.DiffusionCoefficient[1, ncols - 2]) * cLower2);
+                        CR[ncols - 1] = ((-2 * nu0 * CF_2D.DiffusionCoefficient[nrows - 1, ncols - 1]) * cUpper1) + ((2 * nu0 * CF_2D.DiffusionCoefficient[nrows - 2, ncols - 2]) * cUpper2);
+                        break;
+                    case BoundaryConditions.Mixed:
+                        break;
+                    case BoundaryConditions.Unknown:
+                        break;
+                    default:
+                        break;
+                }
+                switch (BCs[2].TypeBC)
+                {
+                    case BoundaryConditions.Dirichlet:
+                        CL = BCs[2].BoundaryFunction(t * dt, BCs[2].PositionVaries, BCs[2].PositionFixed);
+                        break;
+                    case BoundaryConditions.Neumann:
+                        RVector C1, C2; //,C3;
+                        double cUpper1, cUpper2, cLower1, cLower2;
+                        if (t == 0)
+                        {
+                            C1 = C_Initial.GetColVector(0);
+                            C2 = C_Initial.GetColVector(1);
+
+                            cLower1 = C_Initial[0, 0];
+                            cLower2 = C_Initial[1, 1];
+                            cUpper1 = C_Initial[nrows - 1, 0];
+                            cUpper2 = C_Initial[nrows - 2, 1];
+                        }
+                        else
+                        {
+                            C1 = C_Im2.GetColVector(0);
+                            C2 = C_Im2.GetColVector(1);
+
+                            cLower1 = C_Im2[0, 0];
+                            cLower2 = C_Im2[1, 1];
+                            cUpper1 = C_Im2[nrows - 1, 0];
+                            cUpper2 = C_Im2[nrows - 2, 1];
+                        }
+                        //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
+
+                        CL = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(0), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(1), C2); // + C3
+                        CL[0] = ((-2 * nu0 * CF_2D.DiffusionCoefficient[0, 0]) * cLower1) + ((2 * nu0 * CF_2D.DiffusionCoefficient[1, 1]) * cLower2);
+                        CL[ncols - 1] = ((-2 * nu0 * CF_2D.DiffusionCoefficient[nrows - 1, 0]) * cUpper1) + ((2 * nu0 * CF_2D.DiffusionCoefficient[nrows - 2, 1]) * cUpper2);
+                        break;
+                    case BoundaryConditions.Mixed:
+                        break;
+                    case BoundaryConditions.Unknown:
+                        break;
+                    default:
+                        break;
+                }
+                for (int i = 1; i < nrows - 1; i++)
+                {
+                    RVector xold;
+                    if (t == 0) { xold = C_Initial.GetRowVector(i); }
+                    else { xold = C_Im2.GetRowVector(i); } // C_Im2.GetRowVector(i); }
+
+                    RVector v1 = A[i].Dot(xold);
+                    C_Ex.ReplaceRow(v1, i);
+                    C_Ex[i, 0] = CL[i]; //nu *
+                    C_Ex[i, ncols - 1] = CR[i]; //nu *
+                }
+
+                // ===================
+                // ===================
+                // One-half implicit time-step
+                // ===================
+                // Source terms
+                double t12 = (t + 0.5) * dt;
+                if (t == 0) { fn = gxt(X, Y, t12, CF_2D.DiffusionCoefficient, C_Initial); }
+                else { fn = gxt(X, Y, t12, CF_2D.DiffusionCoefficient, C_Im2); }
+
+                f12 = (dt / 2.0) * fn;
+
+                // BCs
+                switch (BCs[0].TypeBC)
+                {
+                    case BoundaryConditions.Dirichlet:
+                        RVector gn = BCs[0].BoundaryFunction((t + 1) * dt, BCs[0].PositionVaries, BCs[0].PositionFixed);
+                        RVector g0 = BCs[0].BoundaryFunction(t * dt, BCs[0].PositionVaries, BCs[0].PositionFixed);
+                        CT = ((0.5 * B[nrows - 1].Dot(gn)) + (0.5 * A[nrows - 1].Dot(g0))); ////((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
+                        break;
+                    case BoundaryConditions.Neumann:
+                        RVector C1, C2; //,C3;
+                        if (t == 0)
+                        {
+                            C1 = C_Initial.GetRowVector(nrows - 1);
+                            C2 = C_Initial.GetRowVector(nrows - 2);
+                        }
+                        else
+                        {
+                            C1 = C_Im2.GetRowVector(nrows - 1);
+                            C2 = C_Im2.GetRowVector(nrows - 2);
+                        }
+                        //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
+                        CT = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetRowVector(nrows - 1), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetRowVector(nrows - 2), C2); // + C3
+                        break;
+                    case BoundaryConditions.Mixed:
+                        break;
+                    case BoundaryConditions.Unknown:
+                        break;
+                    default:
+                        break;
+                }
+                switch (BCs[3].TypeBC)
+                {
+                    case BoundaryConditions.Dirichlet:
+                        RVector gn = BCs[3].BoundaryFunction((t + 1) * dt, BCs[3].PositionVaries, BCs[3].PositionFixed);
+                        RVector g0 = BCs[3].BoundaryFunction(t * dt, BCs[3].PositionVaries, BCs[3].PositionFixed);
+                        CB = ((0.5 * B[0].Dot(gn)) + (0.5 * A[0].Dot(g0))); //((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
+                        break;
+                    case BoundaryConditions.Neumann:
+                        RVector C1, C2; //,C3;
+                        if (t == 0)
+                        {
+                            C1 = C_Initial.GetRowVector(0);
+                            C2 = C_Initial.GetRowVector(1);
+                        }
+                        else
+                        {
+                            C1 = C_Im2.GetRowVector(0);
+                            C2 = C_Im2.GetRowVector(1);
+                        }
+                        //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
+                        CB = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetRowVector(0), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetRowVector(1), C2); // + C3
+                        break;
+                    case BoundaryConditions.Mixed:
+                        break;
+                    case BoundaryConditions.Unknown:
+                        break;
+                    default:
+                        break;
+                }
+                for (int j = 1; j < ncols - 1; j++)
+                {
+                    RVector v1 = C_Ex.GetColVector(j);
+                    v1[0] = CB[j]; //nu * 
+                    v1[ncols - 1] = CT[j]; //nu * 
+
+                    RVector f12s = f12.GetColVector(j); // 
+
+                    RVector u12 = TridiagonalMatrix.Thomas_Algorithm(B[j], v1 + f12s);
+                    C_Im1.ReplaceCol(u12, j);
+                }
+
+                // ===================
+                // ===================
+                // Full implicit time-step
+                // ===================
+                switch (BCs[1].TypeBC)
+                {
+                    case BoundaryConditions.Dirichlet:
+                        CR = BCs[1].BoundaryFunction((t + 1) * dt, BCs[1].PositionVaries, BCs[1].PositionFixed);
+                        CT = BCs[0].BoundaryFunction((t + 1) * dt, BCs[0].PositionVaries, BCs[0].PositionFixed);
+                        RVector ctab = C_Initial.GetRowVector(0);
+                        C_Im2.ReplaceRow(CT, nrows - 1);
+                        break;
+                    case BoundaryConditions.Neumann:
+                        RVector C1, C2; //,C3;
+                        if (t == 0)
+                        {
+                            C1 = C_Initial.GetColVector(ncols - 1);
+                            C2 = C_Initial.GetColVector(ncols - 2);
+                        }
+                        else
+                        {
+                            C1 = C_Im2.GetColVector(ncols - 1);
+                            C2 = C_Im2.GetColVector(ncols - 2);
+                        }
+                        //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
+                        CR = RVector.Product(-2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols - 1), C1) + RVector.Product(2 * nu0 * CF_2D.DiffusionCoefficient.GetColVector(ncols - 2), C2); // + C3
                         break;
                     case BoundaryConditions.Mixed:
                         break;
