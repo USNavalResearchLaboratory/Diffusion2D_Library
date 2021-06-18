@@ -149,7 +149,7 @@ namespace Diffusion2D_Library
             this.dt = dt;
             CF_2D = new CompositionField2D(ny, nx);
 
-            Parallel.For(0, ny, i =>
+            for (int i = 0; i < ny; i++)
             {
                 for (int j = 0; j < nx; j++)
                 {
@@ -157,7 +157,7 @@ namespace Diffusion2D_Library
                     CF_2D.yposition_matrix[j, i] = j * dy;
                     CF_2D.DiffusionCoefficient[j, i] = D[j, i];
                 }
-            });
+            }
 
             C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
             this.I0 = I0;
@@ -172,20 +172,20 @@ namespace Diffusion2D_Library
             RVector off_d_val_u = new(nx - 1);
             RVector main = new(nx);
 
-            Parallel.For(0, nx, i =>
-           {
-               RVector D_row = D.GetRowVector(i);
-               nu = nu0 * D_row;
-               main = 1 - (2 * nu);
+            for (int i = 0; i < nx; i++)
+            {
+                RVector D_row = D.GetRowVector(i);
+                nu = nu0 * D_row;
+                main = 1 - (2 * nu);
 
-               for (int j = 0; j < nx - 1; j++) { off_d_val_l[j] = nu[j]; }
-               for (int j = 1; j < nx; j++) { off_d_val_u[j - 1] = nu[j]; }
+                for (int j = 0; j < nx - 1; j++) { off_d_val_l[j] = nu[j]; }
+                for (int j = 1; j < nx; j++) { off_d_val_u[j - 1] = nu[j]; }
 
-               A[i] = new TridiagonalMatrix(main, off_d_val_l, off_d_val_u);
+                A[i] = new TridiagonalMatrix(main, off_d_val_l, off_d_val_u);
 
-               main = 1 + (2 * nu);
-               B[i] = new TridiagonalMatrix(main, -off_d_val_l, -off_d_val_u);
-           });
+                main = 1 + (2 * nu);
+                B[i] = new TridiagonalMatrix(main, -off_d_val_l, -off_d_val_u);
+            }
 
             C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
             this.I0 = I0;
@@ -398,7 +398,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, nrows - 1, i =>
+                for (int i = 1; i < nrows-1; i++)
                 {
                     RVector xold;
                     if (t == 0) { xold = C_Initial.GetRowVector(i); }
@@ -407,8 +407,9 @@ namespace Diffusion2D_Library
                     RVector v1 = A[i].Dot(xold);
                     C_Ex.ReplaceRow(v1, i);
                     C_Ex[i, 0] = CL[i]; //nu *
-                    C_Ex[i, ncols - 1] = CR[i]; //nu *                    
-                });
+                    C_Ex[i, ncols - 1] = CR[i]; //nu *
+                }
+
                 // ===================
                 // ===================
                 // One-half implicit time-step
@@ -479,7 +480,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, ncols - 1, j =>
+                for (int j = 1; j < ncols-1; j++)
                 {
                     RVector v1 = C_Ex.GetColVector(j);
                     v1[0] = CB[j]; //nu * 
@@ -487,9 +488,10 @@ namespace Diffusion2D_Library
 
                     RVector f12s = f12.GetColVector(j); // 
 
-                    RVector u12 = TridiagonalMatrix.Thomas_Algorithm(B[j], v1 + f12s);               
+                    RVector u12 = TridiagonalMatrix.Thomas_Algorithm(B[j], v1 + f12s);
                     C_Im1.ReplaceCol(u12, j);
-                });
+                }
+
                 // ===================
                 // ===================
                 // Full implicit time-step
@@ -556,7 +558,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, nrows - 1, k =>
+                for (int k = 1; k < nrows - 1; k++)
                 {
                     RVector v1 = C_Ex.GetRowVector(k);
                     RVector u12 = C_Im1.GetRowVector(k);
@@ -568,7 +570,7 @@ namespace Diffusion2D_Library
                     u1[0] = CL[k];  //nu * 
                     u1[ncols - 1] = CR[k]; //nu * 
                     C_Im2.ReplaceRow(u1, k);
-                });
+                }
                 // ===================
 
                 if (Text_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }

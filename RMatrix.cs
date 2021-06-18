@@ -22,13 +22,13 @@ namespace Diffusion2D_Library
             this.nRows = nRows;
             this.nCols = nCols;
             matrix = new double[nRows, nCols];
-            Parallel.For(0, nRows, i =>
+            for (int i = 0; i < nRows; i++)
             {
                 for (int j = 0; j < nCols; j++)
                 {
                     matrix[i, j] = 0.0;
                 }
-            });
+            }
         }
         public RMatrix(double[,] matrix)
         {
@@ -49,7 +49,7 @@ namespace Diffusion2D_Library
         public RMatrix IdentityMatrix()
         {
             RMatrix m = new(nRows, nCols);
-            Parallel.For(0, nRows, i =>
+            for (int i = 0; i < nRows; i++)
             {
                 for (int j = 0; j < nCols; j++)
                 {
@@ -58,7 +58,7 @@ namespace Diffusion2D_Library
                         m[i, j] = 1.0;
                     }
                 }
-            });
+            }
             return m;
         }
         public RMatrix(double[] rv)
@@ -98,7 +98,7 @@ namespace Diffusion2D_Library
         public override string ToString()
         {
             string strMatrix = "(";
-            Parallel.For(0, nRows, i =>
+            for (int i = 0; i < nRows; i++)
             {
                 string str = "";
                 for (int j = 0; j < nCols - 1; j++)
@@ -112,7 +112,7 @@ namespace Diffusion2D_Library
                     strMatrix += " " + str + "\n";
                 else
                     strMatrix += " " + str + ")";
-            });
+            }
             return strMatrix;
         }
         public override bool Equals(object obj)
@@ -145,13 +145,13 @@ namespace Diffusion2D_Library
             bool gt = true;
             if (nrows1! != nrows2 || ncols1 != ncols2) { throw new Exception("Matrices do not have the same dimensions!"); }
 
-            Parallel.For(0, nrows1, i =>
+            for (int i = 0; i < nrows1; i++)
             {
                 for (int j = 0; j < ncols1; j++)
                 {
                     if (rm1[i, j] < rm2[i, j]) { gt = false; }
                 }
-            });
+            }
             return gt;
         }
         public static bool operator <=(RMatrix rm1, RMatrix rm2)
@@ -163,14 +163,14 @@ namespace Diffusion2D_Library
 
             bool lt = true;
             if (nrows1! != nrows2 || ncols1 != ncols2) { throw new Exception("Matrices do not have the same dimensions!"); }
-
-            Parallel.For(0, nrows1, i =>
+            for (int i = 0; i < nrows1; i++)
             {
                 for (int j = 0; j < ncols1; j++)
                 {
                     if (rm1[i, j] > rm2[i, j]) { lt = false; }
                 }
-            });
+            }
+
             return lt;
         }
         public static RMatrix operator +(RMatrix rm)
@@ -794,7 +794,7 @@ namespace Diffusion2D_Library
 
             // Decomposing a matrix
             // into Lower Triangular
-            Parallel.For(0, n, i =>
+            for (int i = 0; i < n; i++)
             {
                 for (int j = 0; j <= i; j++)
                 {
@@ -815,7 +815,7 @@ namespace Diffusion2D_Library
                         lower[i, j] = (rm[i, j] - sum) / lower[j, j];
                     }
                 }
-            });
+            }
         }
         public static double Max(RMatrix rm)
         {
@@ -995,11 +995,10 @@ namespace Diffusion2D_Library
             int ncols = A.GetnCols;
 
             double sum = 0.0;
-            Parallel.For(0, nrows, i =>
+            for (int i = 0; i < nrows; i++)
             {
                 for (int j = 0; j < ncols; j++) { sum += Math.Pow(A[i, j], 2); }
-
-            });
+            }
             double value = Math.Sqrt(sum);
             return value;
         }
@@ -1013,11 +1012,11 @@ namespace Diffusion2D_Library
             if (nrows1! != nrows2 || ncols1 != ncols2) { throw new Exception("Matrices do not have the same dimensions!"); }
 
             double sum = 0.0;
-            Parallel.For(0, nrows1, i =>
+            for (int i = 0; i < nrows1; i++)
             {
                 for (int j = 0; j < ncols1; j++) { sum += Math.Pow(h, 2) * Math.Pow(A[i, j] - B[i, j], 2); }
+            }
 
-            });
             double value = Math.Sqrt(sum);
             return value;
         }
@@ -1042,7 +1041,7 @@ namespace Diffusion2D_Library
             {
                 for (int i = 0; i < nrows; i++) { L[i, 0] = A[i, 0] / L[0, 0]; }
 
-                Parallel.For(1, nrows - 1, i =>
+                for (int i = 1; i < nrows-1; i++)
                 {
                     double sum = 0.0;
                     for (int k = 0; k < i; k++) { sum += L[i, k] * L[i, k]; }
@@ -1054,28 +1053,28 @@ namespace Diffusion2D_Library
                         for (int k = 0; k < i; k++) { sum2 += L[j, k] * L[i, k]; }
                         L[j, i] = (A[j, i] - sum2) / L[i, i];
                     }
+                }
 
-                });
                 double sum3 = 0.0;
                 for (int k = 0; k < ncols; k++) { sum3 += L[nrows - 1, k] * L[nrows - 1, k]; }
                 L[nrows - 1, ncols - 1] = Math.Sqrt(A[nrows - 1, ncols - 1] - sum3);
 
                 y[0] = b[0] / L[0, 0];
 
-                Parallel.For(1, nrows, i =>
+                for (int i = 1; i < nrows; i++)
                 {
                     double sum4 = 0.0;
                     for (int k = 0; k < i; k++) { sum4 += L[i, k] * y[k]; }
                     y[i] = (b[i] - sum4) / L[i, i];
-                });
+                }
 
                 x[nrows - 1] = y[nrows - 1] / L[nrows - 1, ncols - 1];
-                Parallel.For(nrows - 2, -1, i =>
+                for (int i = nrows-2; i > -1; i--)
                 {
                     double sum5 = 0.0;
                     for (int k = i + 1; k < nrows; k++) { sum5 += L[k, i] * x[k]; }
                     x[i] = (y[i] - sum5) / L[i, i];
-                });
+                }
             }
 
             return x;

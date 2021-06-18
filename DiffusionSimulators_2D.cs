@@ -140,14 +140,14 @@ namespace Diffusion2D_Library
             this.dt = dt;
             CF_2D = new CompositionField2D(ny, nx);
 
-            Parallel.For(0, ny, i =>
+            for (int i = 0; i < ny; i++)
             {
                 for (int j = 0; j < nx; j++)
                 {
                     CF_2D.xposition_matrix[j, i] = i * dx;
                     CF_2D.yposition_matrix[j, i] = j * dy;
                 }
-            });
+            }
 
             C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
             this.I0 = I0;
@@ -232,14 +232,15 @@ namespace Diffusion2D_Library
             this.dt = dt;
             CF_2D = new CompositionField2D(ny, nx);
 
-            Parallel.For(0, ny, i =>
+            for (int i = 0; i < ny; i++)
             {
                 for (int j = 0; j < nx; j++)
                 {
                     CF_2D.xposition_matrix[j, i] = i * dx;
                     CF_2D.yposition_matrix[j, i] = j * dy;
                 }
-            });
+            }
+
             C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
 
             int num_bounds = Boundary_Conditions.Length;
@@ -467,7 +468,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, nrows - 1, i =>
+                for (int i = 1; i < nrows -1; i++)
                 {
                     RVector xold;
                     if (t == 0) { xold = C_Initial.GetRowVector(i); }
@@ -476,8 +477,9 @@ namespace Diffusion2D_Library
                     RVector v1 = A.Dot(xold);
                     C_Ex.ReplaceRow(v1, i);
                     C_Ex[i, 0] = CL[i]; //nu *
-                    C_Ex[i, ncols - 1] = CR[i]; //nu *                    
-                });
+                    C_Ex[i, ncols - 1] = CR[i]; //nu *  
+                }
+
                 // ===================
                 // ===================
                 // One-half implicit time-step
@@ -559,7 +561,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, ncols - 1, j =>
+                for (int j = 1; j < ncols-1; j++)
                 {
                     RVector v1 = C_Ex.GetColVector(j);
                     v1[0] = CB[j]; //nu * 
@@ -571,7 +573,8 @@ namespace Diffusion2D_Library
                     //u12[0] = CB[j]; //nu * 
                     //u12[ncols - 1] = CT[j]; //nu * 
                     C_Im1.ReplaceCol(u12, j);
-                });
+                }
+
                 // ===================
                 // ===================
                 // Full implicit time-step
@@ -638,7 +641,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, nrows - 1, k =>
+                for (int k = 1; k < nrows - 1; k++)
                 {
                     RVector v1 = C_Ex.GetRowVector(k);
                     RVector u12 = C_Im1.GetRowVector(k);
@@ -650,7 +653,7 @@ namespace Diffusion2D_Library
                     u1[0] = CL[k];  //nu * 
                     u1[ncols - 1] = CR[k]; //nu * 
                     C_Im2.ReplaceRow(u1, k);
-                });
+                }
                 // ===================
 
                 if (Chat_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
