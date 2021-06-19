@@ -97,6 +97,9 @@ namespace Diffusion2D_Library
         private readonly InitialCondition_Del I0;
         private readonly SourceTerm_Del gxt;
 
+        private string b_filename;
+        private const string suffix = ".csv";
+
         // Properties
         public RMatrix C_Initial
         {
@@ -129,7 +132,11 @@ namespace Diffusion2D_Library
             get { return chat_mode; }
             set { chat_mode = value; }
         }
-
+        public string Base_filename
+        {
+            get { return b_filename; }
+            set { b_filename = value; }
+        }
         // Constructors
         public DiffusionSimulators_2D(double D, double dx, double dy, int nx, int ny, double dt, int nt,
             string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_Del g)
@@ -223,8 +230,24 @@ namespace Diffusion2D_Library
             Chat_mode = Mode.Quiet;
         }
 
+        /// <summary>
+        /// Constructor for the 2D diffusion simulator with a constant diffusivity
+        /// </summary>
+        /// <param name="D"></param>
+        /// <param name="dx"></param>
+        /// <param name="dy"></param>
+        /// <param name="nx"></param>
+        /// <param name="ny"></param>
+        /// <param name="dt"></param>
+        /// <param name="nt"></param>
+        /// <param name="Boundary_Conditions"></param>
+        /// <param name="bc_s"></param>
+        /// <param name="I0"></param>
+        /// <param name="g"></param>
+        /// <param name="chat">Flag for whether or not the time-steps are displayed on the screen</param>
+        /// <param name="base_filename">Base filename for output filenaming</param>
         public DiffusionSimulators_2D(double D, double dx, double dy, int nx, int ny, double dt, int nt,
-            string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_Del g, Mode chat)
+            string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_Del g, Mode chat, string base_filename)
         {
             this.D = D;
             this.dx = dx;
@@ -336,7 +359,7 @@ namespace Diffusion2D_Library
         /// Method for solving the 2D diffusion equation using the Alternating Direction Implicit algorithm
         /// </summary>
         /// <param name="n_time_steps">Integer specifying the number of time-steps to take during the simulation</param>
-        public void TwoD_ADI(int n_time_steps)
+        public void TwoD_ADI(int n_time_steps, int output_interval)
         {
             int nrows = CF_2D.InitialComposition.GetnRows;
             int ncols = CF_2D.InitialComposition.GetnCols;
@@ -376,6 +399,7 @@ namespace Diffusion2D_Library
             diag_val = 1.0 + (2.0 * nu);// 1 + (2 * tau);
             TridiagonalMatrix Bp = new(nrows, diag_val, off_d_val, off_d_val);
 
+            string full_file_name;
             // Time evolution           
             for (int t = 0; t < n_time_steps; t++)
             {
@@ -384,6 +408,18 @@ namespace Diffusion2D_Library
                     if (t % 10 == 0) { Console.WriteLine(t * dt); }
                 }
 
+                if (Chat_mode == Mode.Verbose && output_interval > 0 && Base_filename != null)
+                {
+                    if (t % output_interval == 0)
+                    {
+                        decimal time = (decimal)(t * dt);
+                        Console.WriteLine("{0}s have been simulated", time);
+                        full_file_name = Base_filename + time.ToString() + suffix;
+                        if (File.Exists(full_file_name)) { File.Delete(full_file_name); }
+                        if (t == 0) { FileWriteData_CSV(full_file_name, X, Y, C_Initial); }
+                        else { FileWriteData_CSV(full_file_name, X, Y, C_Im2); }
+                    }
+                }
                 // ===================
                 // Explicit time-step
                 // ===================
@@ -655,9 +691,6 @@ namespace Diffusion2D_Library
                     C_Im2.ReplaceRow(u1, k);
                 }
                 // ===================
-
-                if (Chat_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
-
             }
 
             // Setup the return composition field

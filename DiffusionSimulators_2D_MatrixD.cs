@@ -137,7 +137,7 @@ namespace Diffusion2D_Library
             get { return border; }
             set { border = value; }
         }
-        public Mode Text_mode
+        public Mode Chat_mode
         {
             get { return text_mode; }
             set { text_mode = value; }
@@ -266,7 +266,7 @@ namespace Diffusion2D_Library
             }
 
             gxt = g;
-            Text_mode = Mode.Quiet;
+            Chat_mode = Mode.Quiet;
         }
 
         public DiffusionSimulators_2D_MatrixD(RMatrix D, double dx, double dy, int nx, int ny, double dt, int nt,
@@ -386,7 +386,7 @@ namespace Diffusion2D_Library
             }
 
             gxt = g;
-            Text_mode = Tmode;
+            Chat_mode = Tmode;
             b_filename = base_filename;
         }
 
@@ -428,7 +428,7 @@ namespace Diffusion2D_Library
             // Time evolution           
             for (int t = 0; t < n_time_steps; t++)
             {
-                if (Text_mode == Mode.Verbose)
+                if (Chat_mode == Mode.Verbose)
                 {
                     if (t % 10 == 0) { Console.WriteLine(t * dt); }
                 }
@@ -702,7 +702,7 @@ namespace Diffusion2D_Library
                 }
                 // ===================
 
-                if (Text_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
+                if (Chat_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
 
             }
 
@@ -738,7 +738,7 @@ namespace Diffusion2D_Library
             // Time evolution           
             for (int t = 0; t < n_time_steps; t++)
             {
-                if (Text_mode == Mode.Verbose && output_interval > 0 && Base_filename != null)
+                if (Chat_mode == Mode.Verbose && output_interval > 0 && Base_filename != null)
                 {
                     if (t % output_interval == 0) 
                     {
@@ -930,6 +930,28 @@ namespace Diffusion2D_Library
 
                     RVector f12s = f12.GetColVector(j); // 
 
+                    switch (BCs[0].TypeBC)
+                    {
+                        case BoundaryConditions.Dirichlet:
+                            B[j][0, 0] = 1.0;
+                            B[j][0, 1] = 0.0;
+                            break;
+                        default:
+                            B[j][0, 0] = 1.0;
+                            B[j][0, 1] = 0.0;
+                            break;
+                    }
+                    switch (BCs[3].TypeBC)
+                    {
+                        case BoundaryConditions.Dirichlet:
+                            B[j][ncols - 1, ncols - 1] = 1.0;
+                            B[j][ncols - 1, ncols - 2] = 0.0;
+                            break;
+                        default:
+                            B[j][ncols - 1, ncols - 1] = 1.0;
+                            B[j][ncols - 1, ncols - 2] = 0.0;
+                            break;
+                    }
                     RVector u12 = TridiagonalMatrix.Thomas_Algorithm(B[j], v1 + f12s);
                     C_Im1.ReplaceCol(u12, j);
                 }
@@ -1008,6 +1030,28 @@ namespace Diffusion2D_Library
                     b[0] = CL[k]; //nu * 
                     b[ncols - 1] = CR[k]; //nu * 
 
+                    switch (BCs[0].TypeBC)
+                    {
+                        case BoundaryConditions.Dirichlet:
+                            B[k][0, 0] = 1.0;
+                            B[k][0, 1] = 0.0;
+                            break;
+                        default:
+                            B[k][0, 0] = 1.0;
+                            B[k][0, 1] = 0.0;
+                            break;
+                    }
+                    switch (BCs[3].TypeBC)
+                    {
+                        case BoundaryConditions.Dirichlet:
+                            B[k][ncols - 1, ncols - 1] = 1.0;
+                            B[k][ncols - 1, ncols - 2] = 0.0;
+                            break;
+                        default:
+                            B[k][ncols - 1, ncols - 1] = 1.0;
+                            B[k][ncols - 1, ncols - 2] = 0.0;
+                            break;
+                    }
                     RVector u1 = TridiagonalMatrix.Thomas_Algorithm(B[k], b);
                     u1[0] = CL[k];  //nu * 
                     u1[ncols - 1] = CR[k]; //nu * 
