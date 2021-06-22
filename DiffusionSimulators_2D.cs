@@ -97,6 +97,9 @@ namespace Diffusion2D_Library
         private readonly InitialCondition_Del I0;
         private readonly SourceTerm_Del gxt;
 
+        private string b_filename;
+        private const string suffix = ".csv";
+
         // Properties
         public RMatrix C_Initial
         {
@@ -129,7 +132,11 @@ namespace Diffusion2D_Library
             get { return chat_mode; }
             set { chat_mode = value; }
         }
-
+        public string Base_filename
+        {
+            get { return b_filename; }
+            set { b_filename = value; }
+        }
         // Constructors
         public DiffusionSimulators_2D(double D, double dx, double dy, int nx, int ny, double dt, int nt,
             string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_Del g)
@@ -140,14 +147,14 @@ namespace Diffusion2D_Library
             this.dt = dt;
             CF_2D = new CompositionField2D(ny, nx);
 
-            Parallel.For(0, ny, i =>
+            for (int i = 0; i < ny; i++)
             {
                 for (int j = 0; j < nx; j++)
                 {
                     CF_2D.xposition_matrix[j, i] = i * dx;
                     CF_2D.yposition_matrix[j, i] = j * dy;
                 }
-            });
+            }
 
             C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
             this.I0 = I0;
@@ -223,8 +230,24 @@ namespace Diffusion2D_Library
             Chat_mode = Mode.Quiet;
         }
 
+        /// <summary>
+        /// Constructor for the 2D diffusion simulator with a constant diffusivity
+        /// </summary>
+        /// <param name="D"></param>
+        /// <param name="dx"></param>
+        /// <param name="dy"></param>
+        /// <param name="nx"></param>
+        /// <param name="ny"></param>
+        /// <param name="dt"></param>
+        /// <param name="nt"></param>
+        /// <param name="Boundary_Conditions"></param>
+        /// <param name="bc_s"></param>
+        /// <param name="I0"></param>
+        /// <param name="g"></param>
+        /// <param name="chat">Flag for whether or not the time-steps are displayed on the screen</param>
+        /// <param name="base_filename">Base filename for output filenaming</param>
         public DiffusionSimulators_2D(double D, double dx, double dy, int nx, int ny, double dt, int nt,
-            string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_Del g, Mode chat)
+            string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_Del g, Mode chat, string base_filename)
         {
             this.D = D;
             this.dx = dx;
@@ -232,14 +255,15 @@ namespace Diffusion2D_Library
             this.dt = dt;
             CF_2D = new CompositionField2D(ny, nx);
 
-            Parallel.For(0, ny, i =>
+            for (int i = 0; i < ny; i++)
             {
                 for (int j = 0; j < nx; j++)
                 {
                     CF_2D.xposition_matrix[j, i] = i * dx;
                     CF_2D.yposition_matrix[j, i] = j * dy;
                 }
-            });
+            }
+
             C_Initial = I0(CF_2D.xposition_matrix, CF_2D.yposition_matrix);
 
             int num_bounds = Boundary_Conditions.Length;
@@ -335,7 +359,7 @@ namespace Diffusion2D_Library
         /// Method for solving the 2D diffusion equation using the Alternating Direction Implicit algorithm
         /// </summary>
         /// <param name="n_time_steps">Integer specifying the number of time-steps to take during the simulation</param>
-        public void TwoD_ADI(int n_time_steps)
+        public void TwoD_ADI(int n_time_steps, int output_interval)
         {
             int nrows = CF_2D.InitialComposition.GetnRows;
             int ncols = CF_2D.InitialComposition.GetnCols;
@@ -375,6 +399,7 @@ namespace Diffusion2D_Library
             diag_val = 1.0 + (2.0 * nu);// 1 + (2 * tau);
             TridiagonalMatrix Bp = new(nrows, diag_val, off_d_val, off_d_val);
 
+            string full_file_name;
             // Time evolution           
             for (int t = 0; t < n_time_steps; t++)
             {
@@ -383,6 +408,18 @@ namespace Diffusion2D_Library
                     if (t % 10 == 0) { Console.WriteLine(t * dt); }
                 }
 
+                if (Chat_mode == Mode.Verbose && output_interval > 0 && Base_filename != null)
+                {
+                    if (t % output_interval == 0)
+                    {
+                        decimal time = (decimal)(t * dt);
+                        Console.WriteLine("{0}s have been simulated", time);
+                        full_file_name = Base_filename + time.ToString() + suffix;
+                        if (File.Exists(full_file_name)) { File.Delete(full_file_name); }
+                        if (t == 0) { FileWriteData_CSV(full_file_name, X, Y, C_Initial); }
+                        else { FileWriteData_CSV(full_file_name, X, Y, C_Im2); }
+                    }
+                }
                 // ===================
                 // Explicit time-step
                 // ===================
@@ -467,7 +504,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, nrows - 1, i =>
+                for (int i = 1; i < nrows -1; i++)
                 {
                     RVector xold;
                     if (t == 0) { xold = C_Initial.GetRowVector(i); }
@@ -476,8 +513,9 @@ namespace Diffusion2D_Library
                     RVector v1 = A.Dot(xold);
                     C_Ex.ReplaceRow(v1, i);
                     C_Ex[i, 0] = CL[i]; //nu *
-                    C_Ex[i, ncols - 1] = CR[i]; //nu *                    
-                });
+                    C_Ex[i, ncols - 1] = CR[i]; //nu *  
+                }
+
                 // ===================
                 // ===================
                 // One-half implicit time-step
@@ -559,7 +597,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, ncols - 1, j =>
+                for (int j = 1; j < ncols-1; j++)
                 {
                     RVector v1 = C_Ex.GetColVector(j);
                     v1[0] = CB[j]; //nu * 
@@ -571,7 +609,8 @@ namespace Diffusion2D_Library
                     //u12[0] = CB[j]; //nu * 
                     //u12[ncols - 1] = CT[j]; //nu * 
                     C_Im1.ReplaceCol(u12, j);
-                });
+                }
+
                 // ===================
                 // ===================
                 // Full implicit time-step
@@ -638,7 +677,7 @@ namespace Diffusion2D_Library
                     default:
                         break;
                 }
-                Parallel.For(1, nrows - 1, k =>
+                for (int k = 1; k < nrows - 1; k++)
                 {
                     RVector v1 = C_Ex.GetRowVector(k);
                     RVector u12 = C_Im1.GetRowVector(k);
@@ -650,11 +689,8 @@ namespace Diffusion2D_Library
                     u1[0] = CL[k];  //nu * 
                     u1[ncols - 1] = CR[k]; //nu * 
                     C_Im2.ReplaceRow(u1, k);
-                });
+                }
                 // ===================
-
-                if (Chat_mode == Mode.Verbose) { if (t == n_time_steps - 1) { Console.WriteLine(t * dt); } }
-
             }
 
             // Setup the return composition field
