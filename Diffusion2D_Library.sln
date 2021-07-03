@@ -5,8 +5,6 @@ VisualStudioVersion = 16.0.31402.337
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Diffusion2D_Library", "Diffusion2D_Library.csproj", "{0402B501-B293-47CA-AE2E-7939BD274CAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject_Diffusion", "..\TestProject_Diffusion\TestProject_Diffusion.csproj", "{11FBB911-0555-4649-85A8-A5F4CAA34DB5}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{0402B501-B293-47CA-AE2E-7939BD274CAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0402B501-B293-47CA-AE2E-7939BD274CAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0402B501-B293-47CA-AE2E-7939BD274CAE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{11FBB911-0555-4649-85A8-A5F4CAA34DB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{11FBB911-0555-4649-85A8-A5F4CAA34DB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{11FBB911-0555-4649-85A8-A5F4CAA34DB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{11FBB911-0555-4649-85A8-A5F4CAA34DB5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
