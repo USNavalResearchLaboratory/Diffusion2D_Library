@@ -8,81 +8,64 @@ namespace Diffusion2D_Library
 {
     class BoundaryAndInitialConditionsMethods
     {
-        public static RVector Boundary_2D_Constant(double t, RVector SlidingSide, double FixedValue)
+        /// <summary>
+        /// Method for a boundary condition with a specified constant value
+        /// </summary>
+        /// <param name="n">Size of the vector of entries</param>
+        /// <param name="constant_value">Constant value to be specified on the boundary</param>
+        /// <returns>A vector of the specified size with the specified constant value in each entry</returns>
+        public static RVector Boundary_2D_Constant(int n, double constant_value)
         {
-            int n = SlidingSide.GetRVectorSize;
             RVector BC = new(n);
-            //double y = FixedValue;
-
-            for (int i = 0; i < n; i++)
-            {
-                //double x = SlidingSide[i];
-                BC[i] = 55.55; // Math.Exp(x * y * t);
-            }
-
+            for (int i = 0; i < n; i++) { BC[i] = constant_value; }
             return BC;
         }
-        public static RVector Boundary_2D_Zero(double t, RVector SlidingSide, double FixedValue)
-        {
-            int n = SlidingSide.GetRVectorSize;
-            RVector BC = new(n);
-            //double x = FixedValue;
-
-            for (int i = 0; i < n; i++)
-            {
-                //double y = SlidingSide[i];
-                BC[i] = 0.0; // Math.Exp(x * y * t);
-            }
-
+        /// <summary>
+        /// Method for a boundary condition with a zero value
+        /// </summary>
+        /// <param name="n">Size of the vector to be returned</param>
+        /// <returns>A vector of the specified size with a zero in each entry</returns>
+        public static RVector Boundary_2D_Zero(int n)
+        {   
+            RVector BC = new(n);         
             return BC;
         }
-        public static RMatrix InitialCondition_2D(RMatrix xposition, RMatrix yposition)
+        /// <summary>
+        /// Method to create an initial composition matrix with 0 in all entried
+        /// </summary>
+        /// <param name="nrows">Number of rows in the matrix</param>
+        /// <param name="ncols">Number of columns in the matrix</param>
+        /// /// <param name="value">Constant value to set the initial condition</param>
+        /// <returns>A matrix with a constant value in all of its entries</returns>
+        public static RMatrix InitialCondition_2D_Zero(int nrows, int ncols, double value)
         {
-            int nrows = xposition.GetnRows;
-            int ncols = xposition.GetnCols;
-
-
             RMatrix composition_field = new(nrows, ncols);
-
-            //for (int i = 0; i < nrows; i++)
-            //{
-            //    for (int j = 0; j < ncols; j++)
-            //    {
-            //        //if (i >= nx_start && i <= nx_end && j >= ny_start && j <= ny_end) { composition_field[i, j] = 0.0; }
-            //        //else { composition_field[i, j] = 0.0; }
-            //        double x = xposition[i, j];
-            //        double y = yposition[i, j];
-            //        composition_field[i, j] = 0.0; // Math.Exp(x * y * 0.0);
-            //    }
-            //}
-
+            for (int i = 0; i < nrows; i++)
+            {
+                for (int j = 0; j < ncols; j++)
+                {
+                    composition_field[i, j] = value;
+                }
+            }
             return composition_field;
         }
-        public static RMatrix SourceTerm_2D(RMatrix xposition, RMatrix yposition, double time, RMatrix D, RMatrix composition)
+        /// <summary>
+        /// A method to create a source term that returns a specified vlaue in all of its entries
+        /// </summary>
+        /// <param name="nrows">Number of rows in the matrix</param>
+        /// <param name="ncols">Numbe of columns in the matrix</param>
+        /// <returns>A matrix with the specified value in all of its rows and columns</returns>
+        public static RMatrix SourceTerm_2D(int nrows, int ncols, double value)
         {
-            //double t = time;
-            int nrows = xposition.GetnRows;
-            int ncols = xposition.GetnCols;
-
-            RMatrix C_field = new(nrows, ncols);
-
-            //for (int i = 1; i < nrows - 1; i++)
-            //{
-            //    for (int j = 1; j < ncols - 1; j++)
-            //    {
-            //        double x = xposition[i, j];
-            //        double y = yposition[i, j];
-
-
-            //        double term1 = Math.Exp(x * y * t);
-            //        double term2 = x * y;
-            //        double term3 = Math.Pow(y * t, 2);
-            //        double term4 = Math.Pow(x * t, 2);
-
-            //        C_field[i, j] = 0.0; // (term2 - (D[i, j] * (term3 + term4))) * term1;
-            //    }
-            //}
-            return C_field;
+            RMatrix composition_field = new(nrows, ncols);
+            for (int i = 0; i < nrows; i++)
+            {
+                for (int j = 0; j < ncols; j++)
+                {
+                    composition_field[i, j] = value;
+                }
+            }
+            return composition_field;
         }
     }
 }

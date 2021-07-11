@@ -37,13 +37,13 @@ namespace Diffusion2D_Library
         /// <param name="time"></param>
         /// <returns>A vector storing the composition on a boundary of a 2D field</returns>
         //public delegate RVector BoundaryCondition_Del(double time, int n);
-        public delegate RVector BoundaryCondition_Del(double t, RVector SlidingSide, double FixedValue);
+        public delegate RVector Del_BC_Method(double t, RVector SlidingSide, double FixedValue);
         /// <summary>
         /// Delegate for assigning the initial composition field in a 2D region
         /// </summary>
         /// <param name="c"></param>
         /// <returns>A matrix of composition values</returns>
-        public delegate RMatrix InitialCondition_Del(RMatrix x, RMatrix y);
+        public delegate RMatrix Del_IC_xy(RMatrix x, RMatrix y);
         /// <summary>
         /// Delegate for calculating sources/sinks for reactions occurring in a 2D composition field
         /// </summary>
@@ -51,7 +51,7 @@ namespace Diffusion2D_Library
         /// <param name="time"></param>
         /// <param name="composition"></param>
         /// <returns>A matrix of composition values</returns>
-        public delegate RMatrix SourceTerm_Del(RMatrix xposition, RMatrix yposition, double time, RMatrix DiffCoeff, RMatrix composition);
+        public delegate RMatrix Del_Source_xy(RMatrix xposition, RMatrix yposition, double time, RMatrix DiffCoeff, RMatrix composition);
         /// <summary>
         /// Delegate for calculating sources/sinks for reactions occurring in a 2D composition field with diffusivity as a matrix
         /// </summary>
@@ -62,6 +62,10 @@ namespace Diffusion2D_Library
         /// <param name="composition"></param>
         /// <returns></returns>
         public delegate RMatrix SourceTerm_MatrixD_Del(RMatrix xposition, RMatrix yposition, double time, RMatrix DiffCoeff, RMatrix composition);
+        public delegate RVector Del_BC_Constant(int n, double v);
+        public delegate RMatrix Del_IC_Constant(int nr, int nc, double v);
+        public delegate RMatrix Del_Source_Constant(int nr, int nc, double v);
+
         /// <summary>
         /// Enumeration that specifies the type of boundary condition to be applied to a boundary
         /// </summary>
@@ -79,7 +83,7 @@ namespace Diffusion2D_Library
         {
             public BoundingBox BoundaryLocation;
             public ABoundaryCondition TypeBC;
-            public BoundaryCondition_Del BoundaryFunction;
+            public Del_BC_Method BoundaryFunction;
             public RVector PositionVaries;
             public double PositionFixed;
         }
@@ -105,7 +109,7 @@ namespace Diffusion2D_Library
         private readonly TridiagonalMatrix[] B_col;
         private RMatrix diffusivity;
 
-        private readonly InitialCondition_Del I0;
+        private readonly Del_IC_xy I0;
         private readonly SourceTerm_MatrixD_Del gxt_function;
         private RMatrix gxt_matrix;
 
@@ -166,7 +170,7 @@ namespace Diffusion2D_Library
         // Constructors
         // ====================================================================
         public DiffusionSimulators_2D_MatrixD(RMatrix D, double dx, double dy, int nx, int ny, double dt, int nt,
-            ABoundaryCondition[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_MatrixD_Del g)
+            ABoundaryCondition[] Boundary_Conditions, Del_BC_Method[] bc_s, Del_IC_xy I0, SourceTerm_MatrixD_Del g)
         {
             this.dx = dx;
             this.dy = dy;
@@ -382,7 +386,7 @@ namespace Diffusion2D_Library
         }
 
         public DiffusionSimulators_2D_MatrixD(RMatrix D, double dx, double dy, int nx, int ny, double dt, int nt,
-    ABoundaryCondition[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_MatrixD_Del g, 
+    ABoundaryCondition[] Boundary_Conditions, Del_BC_Method[] bc_s, Del_IC_xy I0, SourceTerm_MatrixD_Del g, 
     Mode Tmode, string base_filename)
         {
             this.dx = dx;
