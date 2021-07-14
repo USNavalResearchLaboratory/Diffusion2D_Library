@@ -10,72 +10,8 @@ namespace Diffusion2D_Library
     /// <summary>
     /// Solves the parabolic partial differential equation: ∂u/∂t-(∂^2 u)/(∂x^2) - (∂^2 u)/(∂y^2)=f(x,y,t) in two dimensions
     /// </summary>
-    public class DiffusionSimulators_2D
-    {
-        public struct CompositionField2D
-        {
-            public RMatrix InitialComposition;
-            public RMatrix FinalComposition;
-            public RMatrix xposition_matrix;
-            public RMatrix yposition_matrix;
-            public CompositionField2D(int nx, int ny)
-            {
-                InitialComposition = new(nx, ny);
-                FinalComposition = new(nx, ny);
-                xposition_matrix = new(nx, ny);
-                yposition_matrix = new(nx, ny);
-            }
-        }
-        /// <summary>
-        /// Delegate for methods for boundary condition functions
-        /// </summary>
-        /// <param name="time"></param>
-        /// <returns>A vector storing the composition on a boundary of a 2D field</returns>
-        //public delegate RVector BoundaryCondition_Del(double time, int n);
-        public delegate RVector BoundaryCondition_Del(double t, RVector SlidingSide, double FixedValue);
-        /// <summary>
-        /// Delegate for assigning the initial composition field in a 2D region
-        /// </summary>
-        /// <param name="c"></param>
-        /// <returns>A matrix of composition values</returns>
-        public delegate RMatrix InitialCondition_Del(RMatrix x, RMatrix y);
-        /// <summary>
-        /// Delegate for calculating sources/sinks for reactions occurring in a 2D composition field
-        /// </summary>
-        /// <param name="position"></param>
-        /// <param name="time"></param>
-        /// <param name="composition"></param>
-        /// <returns>A matrix of composition values</returns>
-        public delegate RMatrix SourceTerm_Del(RMatrix xposition, RMatrix yposition, double time, double DiffCoeff, RMatrix composition);
-        /// <summary>
-        /// Delegate for calculating sources/sinks for reactions occurring in a 2D composition field with diffusivity as a matrix
-        /// </summary>
-        /// <param name="xposition"></param>
-        /// <param name="yposition"></param>
-        /// <param name="time"></param>
-        /// <param name="DiffCoeff"></param>
-        /// <param name="composition"></param>
-        /// <returns></returns>
-        public delegate RMatrix SourceTerm_MatrixD_Del(RMatrix xposition, RMatrix yposition, double time, RMatrix DiffCoeff, RMatrix composition);
-        /// <summary>
-        /// Enumeration that specifies the type of boundary condition to be applied to a boundary
-        /// </summary>
-        /// 
-        public enum BoundaryConditions
-        {
-            Dirichlet,
-            Neumann,
-            Mixed,
-            Unknown
-        }
-        public enum BoundingBox
-        {
-            left,
-            right,
-            top,
-            bottom
-        }
-        public enum Mode { Quiet, Verbose }
+    public class DiffusionSimulators_2D_ConstantD : DiffusionSimulator2D
+    {        
         public struct Boundary
         {
             public BoundingBox BoundaryLocation;
@@ -138,7 +74,7 @@ namespace Diffusion2D_Library
             set { b_filename = value; }
         }
         // Constructors
-        public DiffusionSimulators_2D(double D, double dx, double dy, int nx, int ny, double dt, int nt,
+        public DiffusionSimulators_2D_ConstantD(double D, double dx, double dy, int nx, int ny, double dt, int nt,
             string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_Del g)
         {
             this.D = D;
@@ -246,7 +182,7 @@ namespace Diffusion2D_Library
         /// <param name="g"></param>
         /// <param name="chat">Flag for whether or not the time-steps are displayed on the screen</param>
         /// <param name="base_filename">Base filename for output filenaming</param>
-        public DiffusionSimulators_2D(double D, double dx, double dy, int nx, int ny, double dt, int nt,
+        public DiffusionSimulators_2D_ConstantD(double D, double dx, double dy, int nx, int ny, double dt, int nt,
             string[] Boundary_Conditions, BoundaryCondition_Del[] bc_s, InitialCondition_Del I0, SourceTerm_Del g, Mode chat, string base_filename)
         {
             this.D = D;
@@ -337,7 +273,7 @@ namespace Diffusion2D_Library
             Chat_mode = chat;
         }
 
-        public DiffusionSimulators_2D(double[] coeffs, int[] n, InitialCondition_Del I0)  //string Boundary_Conditions,
+        public DiffusionSimulators_2D_ConstantD(double[] coeffs, int[] n, InitialCondition_Del I0)  //string Boundary_Conditions,
         {
             if (coeffs.Length >= 3)
             {
