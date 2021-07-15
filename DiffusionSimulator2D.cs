@@ -109,6 +109,7 @@ namespace Diffusion2D_Library
 
         // Fields
         internal string b_filename;
+        internal string[] errors;
         internal double dt;
         internal double dx;
         internal double dy;
@@ -117,11 +118,10 @@ namespace Diffusion2D_Library
         internal BoundaryWithFunction[] border_with_function;
         internal BoundaryWithVector[] border_with_vector;
         internal Mode text_mode;
-        internal TridiagonalMatrix[] A;
-        internal TridiagonalMatrix[] B;
-        //public readonly TridiagonalMatrix[] B_col;
-        //internal RMatrix diffusivity;
 
+
+        //internal RMatrix diffusivity;
+        internal bool error_flag = false;
         public Del_IC_xy I0;
         public Del_Source_MatrixD gxt_function;
         public Del_Source_xy gxt_xy;
@@ -168,6 +168,11 @@ namespace Diffusion2D_Library
         {
             get { return b_filename; }
             set { b_filename = value; }
+        }
+        public string[] Errors
+        {
+            get { return errors; }
+            set { errors = value; }
         }
 
 
