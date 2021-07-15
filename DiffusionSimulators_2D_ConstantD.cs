@@ -288,6 +288,7 @@ namespace Diffusion2D_Library
                         if (t % output_interval == 0)
                         {
                             decimal time = (decimal)(t * dt);
+                            Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("{0}s have been simulated", time);
                             full_file_name = Base_filename + time.ToString() + suffix;
                             if (File.Exists(full_file_name)) { File.Delete(full_file_name); }
@@ -547,6 +548,8 @@ namespace Diffusion2D_Library
                 {
                     Errors[t] = e.Message;
                     error_flag = true;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Fault!");
                 }
             }
 
