@@ -245,9 +245,7 @@ namespace Diffusion2D_Library
             Errors = new string[nt];
         }
 
-        public DiffusionSimulators_2D_MatrixD(RMatrix D, double dx, double dy, int nx, int ny, double dt, int nt,
-    ABoundaryCondition[] Boundary_Conditions, Del_BC_xy[] bc_s, Del_IC_xy I0, Del_Source_MatrixD g, 
-    Mode Tmode, string base_filename)
+        public DiffusionSimulators_2D_MatrixD(RMatrix D, double dx, double dy, int nx, int ny, double dt, int nt, ABoundaryCondition[] Boundary_Conditions, Del_BC_xy[] bc_s, Del_IC_xy I0, Del_Source_MatrixD g, Mode Tmode, string base_filename)
         {
             this.dx = dx;
             this.dy = dy;
@@ -419,6 +417,11 @@ namespace Diffusion2D_Library
                             RVector Ctab = C_Initial.GetRowVector(ny - 1) + C0;
                             C_Initial.ReplaceRow(C0, ny - 1);
                         }
+                        else if (border_with_function[i].TypeBC == ABoundaryCondition.neumann)
+                        {
+                            border_with_function[i].PositionVaries = X.GetRowVector(X.GetnRows - 1);
+                            border_with_function[i].PositionFixed = Y[X.GetnRows - 1, 0];
+                        }
                         break;
                     case BoundingBox.right:
                         if (border_with_function[i].TypeBC == ABoundaryCondition.dirichlet)
@@ -429,6 +432,11 @@ namespace Diffusion2D_Library
 
                             RVector Ctab = C_Initial.GetColVector(nx - 1) + C0;
                             C_Initial.ReplaceCol(C0, nx - 1);
+                        }
+                        else if (border_with_function[i].TypeBC == ABoundaryCondition.neumann)
+                        {
+                            border_with_function[i].PositionVaries = Y.GetColVector(0);
+                            border_with_function[i].PositionFixed = X[0, Y.GetnCols - 1];
                         }
                         break;
                     case BoundingBox.left:
@@ -441,6 +449,11 @@ namespace Diffusion2D_Library
                             RVector Ctab = C_Initial.GetColVector(0) + C0;
                             C_Initial.ReplaceCol(C0, 0);
                         }
+                        else if (border_with_function[i].TypeBC == ABoundaryCondition.neumann)
+                        {
+                            border_with_function[i].PositionVaries = Y.GetColVector(0);
+                            border_with_function[i].PositionFixed = X[0, 0];
+                        }
                         break;
                     case BoundingBox.bottom:
                         if (border_with_function[i].TypeBC == ABoundaryCondition.dirichlet)
@@ -451,6 +464,11 @@ namespace Diffusion2D_Library
 
                             RVector Ctab = C_Initial.GetRowVector(0) + C0;
                             C_Initial.ReplaceRow(C0, 0);
+                        }
+                        else if (border_with_function[i].TypeBC == ABoundaryCondition.neumann)
+                        {
+                            border_with_function[i].PositionVaries = X.GetRowVector(X.GetnRows - 1);
+                            border_with_function[i].PositionFixed = Y[0, 0];
                         }
                         break;
                 }

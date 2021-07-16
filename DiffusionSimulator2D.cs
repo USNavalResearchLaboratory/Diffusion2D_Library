@@ -118,9 +118,6 @@ namespace Diffusion2D_Library
         internal BoundaryWithFunction[] border_with_function;
         internal BoundaryWithVector[] border_with_vector;
         internal Mode text_mode;
-
-
-        //internal RMatrix diffusivity;
         internal bool error_flag = false;
         public Del_IC_xy I0;
         public Del_Source_MatrixD gxt_function;
@@ -129,8 +126,8 @@ namespace Diffusion2D_Library
 
         // Properties
         public RMatrix C_Initial
-        {
-            get { return cf_2D.InitialCompositionValues; }
+        {            
+            get => cf_2D.InitialCompositionValues;
             set
             {
                 if (value.GetnCols > 0 && value.GetnRows > 0) { cf_2D.InitialCompositionValues = value; }
@@ -138,41 +135,35 @@ namespace Diffusion2D_Library
         }
         public RMatrix C_Final
         {
-            get { return cf_2D.FinalCompositionValues; }
+            get => cf_2D.FinalCompositionValues;
             set { if (value.GetnCols > 0 && value.GetnRows > 0) { cf_2D.FinalCompositionValues = value; } }
         }
-        public RMatrix X
-        {
-            get { return cf_2D.XPositionValues; }
-        }
-        public RMatrix Y
-        {
-            get { return cf_2D.YPositionValues; }
-        }
+        public RMatrix X => cf_2D.XPositionValues;
+        public RMatrix Y => cf_2D.YPositionValues;
         public BoundaryWithFunction[] BCs_Functions
         {
-            get { return border_with_function; }
-            set { border_with_function = value; }
+            get => border_with_function;
+            set => border_with_function = value;
         }
         public BoundaryWithVector[] BCs_Vector
         {
-            get { return border_with_vector; }
-            set { border_with_vector = value; }
+            get => border_with_vector;
+            set => border_with_vector = value;
         }
         public Mode Chat_mode
         {
-            get { return text_mode; }
-            set { text_mode = value; }
+            get => text_mode;
+            set => text_mode = value;
         }
         public string Base_filename
         {
-            get { return b_filename; }
-            set { b_filename = value; }
+            get => b_filename;
+            set => b_filename = value;
         }
         public string[] Errors
         {
-            get { return errors; }
-            set { errors = value; }
+            get => errors;
+            set => errors = value;
         }
 
 
