@@ -492,6 +492,24 @@ namespace Diffusion2D_Library
             }
             return RowVector;
         }
+        public RVector GetRowVector(int m, int ns, int ne)
+        {
+            if (m < 0 || m > nRows) { throw new Exception("m-th row is out of range!"); }
+            if (ns > nCols || ne > nCols) { throw new Exception("request for section is out of range!"); }
+            if (ne < ns)
+            {
+                int nh = ns;
+                ns = ne;
+                ne = nh;                
+            }
+            int delta = ne - ns;
+            RVector RowVector = new(delta);
+            for (int i = ns; i < ne; i++)
+            {
+                RowVector[i - ns] = matrix[m, i];
+            }
+            return RowVector;
+        }
         // Extracts a column vector from a real matrix at specified column
         public RVector GetColVector(int m)
         {
@@ -503,6 +521,24 @@ namespace Diffusion2D_Library
             for (int i = 0; i < nRows; i++)
             {
                 ColCVector[i] = matrix[i, m];
+            }
+            return ColCVector;
+        }
+        public RVector GetColVector(int m, int ns, int ne)
+        {
+            if (m < 0 || m > nCols) { throw new Exception("m-th row is out of range!"); }
+            if (ns > nRows || ne > nRows) { throw new Exception("request for section is out of range!"); }
+            if (ne < ns)
+            {
+                int nh = ns;
+                ns = ne;
+                ne = nh;
+            }
+            int delta = ne - ns;
+            RVector ColCVector = new(delta);
+            for (int i = ns; i < ne; i++)
+            {
+                ColCVector[i - ns] = matrix[i, m];
             }
             return ColCVector;
         }
@@ -734,6 +770,22 @@ namespace Diffusion2D_Library
             }
             return new RMatrix(matrix);
         }
+        public RMatrix ReplaceRow(RVector rv, int m, int ns, int ne)
+        {
+            if (m < 0 || m > nRows)
+            {
+                throw new Exception("m-th row is out of range!");
+            }
+            //if (rv.GetRVectorSize != nCols)
+            //{
+            //    throw new Exception("Vector size is out of range!");
+            //}
+            for (int i = ns; i < ne; i++)
+            {
+                matrix[m, i] = rv[i - ns];
+            }
+            return new RMatrix(matrix);
+        }
         // Replaces the n-th column of a real matrix with contents of a real vector
         public RMatrix ReplaceCol(RVector rv, int n)
         {
@@ -748,6 +800,22 @@ namespace Diffusion2D_Library
             for (int i = 0; i < nRows; i++)
             {
                 matrix[i, n] = rv[i];
+            }
+            return new RMatrix(matrix);
+        }
+        public RMatrix ReplaceCol(RVector rv, int n, int ns, int ne)
+        {
+            if (n < 0 || n > nCols)
+            {
+                throw new Exception("n-th col is out of range!");
+            }
+            //if (rv.GetRVectorSize != nRows)
+            //{
+            //    throw new Exception("Vector size is out of range!");
+            //}
+            for (int i = ns; i < ne; i++)
+            {
+                matrix[i, n] = rv[i - ns];
             }
             return new RMatrix(matrix);
         }
