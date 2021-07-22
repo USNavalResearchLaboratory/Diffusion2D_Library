@@ -111,7 +111,7 @@ namespace Diffusion2D_Library
             RVector b = new(n);
 
             // Define the A matrix
-            double nu = (D * dt) / (Math.Pow(dx, 2));
+            double nu = D * dt / Math.Pow(dx, 2);
             double off_d_val = nu;
             double diag_val = 1 - (2 * nu);
             TridiagonalMatrix A = new(n, diag_val, off_d_val, off_d_val);
@@ -158,8 +158,8 @@ namespace Diffusion2D_Library
                         break;
                     case BoundaryConditions.Neumann:
                         xnew = A.Dot(xold) + g(position, t * dt, xold);
-                        xnew[0] = (-2 * nu) * Lbc(t * dt);
-                        xnew[n - 1] = (2 * nu) * Rbc(t * dt);
+                        xnew[0] = -2 * nu * Lbc(t * dt);
+                        xnew[n - 1] = 2 * nu * Rbc(t * dt);
                         break;
                     case BoundaryConditions.Mixed:
                         xnew = A.Dot(xold) + b;
@@ -184,7 +184,7 @@ namespace Diffusion2D_Library
             RVector xnew = new(n);
 
             // Define the A matrix
-            double nu = (D * dt) / (Math.Pow(dx, 2));
+            double nu = D * dt / Math.Pow(dx, 2);
             double off_d_val = -nu;
             double diag_val = 1 + (2 * nu);
             TridiagonalMatrix A = new(n, diag_val, off_d_val, off_d_val);
@@ -254,7 +254,7 @@ namespace Diffusion2D_Library
             RVector bj1 = new(n);
 
             // Setup the A matrix
-            double nu = (D * dt) / (Math.Pow(dx, 2));
+            double nu = D * dt / Math.Pow(dx, 2);
             double off_d_val, diag_val;
             off_d_val = -nu / 2;
             diag_val = 1.0 + nu;

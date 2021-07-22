@@ -222,7 +222,7 @@ namespace Diffusion2D_Library
                 {
                     Rval += A[i, k] * xold[k];
                 }
-                xnew[i] = (1.0 / A[i, i]) * (b[i] - Lval - Rval);
+                xnew[i] = 1.0 / A[i, i] * (b[i] - Lval - Rval);
             }
 
             return xnew;
@@ -280,7 +280,7 @@ namespace Diffusion2D_Library
                         sum = b[j] - (Ajjm1 * x[j - 1]) - (Ajjp1 * XO[j + 1]);
                     }
                     Ajj = A[j, j];
-                    x[j] = (1.0 / Ajj) * (sum);
+                    x[j] = 1.0 / Ajj * sum;
                 }
                 RVector normx = x - XO;
                 double normx_val = normx.GetNorm();
@@ -319,7 +319,7 @@ namespace Diffusion2D_Library
                         sum = b[j] - (Ajjm1 * x[j - 1]) - (Ajjp1 * XO[j + 1]);
                     }
                     Ajj = A[j, j];
-                    x[j] = ((1 - omega) * XO[j]) + (omega / Ajj) * (sum);
+                    x[j] = ((1 - omega) * XO[j]) + omega / Ajj * sum;
                 }
                 RVector normx = x - XO;
                 double normx_val = normx.GetNorm();

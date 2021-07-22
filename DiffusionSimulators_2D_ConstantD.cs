@@ -255,7 +255,7 @@ namespace Diffusion2D_Library
             RVector CT = new(ncols);
             RVector CB = new(ncols);
 
-            double nu = (d_coeff * dt) / (2 * Math.Pow(dx, 2));
+            double nu = d_coeff * dt / (2 * Math.Pow(dx, 2));
 
             // Define the A matrix for the explicit steps
             double off_d_val = nu;
@@ -329,9 +329,9 @@ namespace Diffusion2D_Library
                                 cUpper2 = C_Im2[nrows - 2, ncols - 2];
                             }
                             //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                            CR = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
-                            CR[0] = ((-2 * nu) * cLower1) + ((2 * nu) * cLower2);
-                            CR[ncols - 1] = ((-2 * nu) * cUpper1) + ((2 * nu) * cUpper2);
+                            CR = (-2 * nu * C1) + (2 * nu * C2); // + C3
+                            CR[0] = (-2 * nu * cLower1) + (2 * nu * cLower2);
+                            CR[ncols - 1] = (-2 * nu * cUpper1) + (2 * nu * cUpper2);
                             break;
                         default:
                             break;
@@ -365,9 +365,9 @@ namespace Diffusion2D_Library
                                 cUpper2 = C_Im2[nrows - 2, 1];
                             }
                             //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                            CL = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
-                            CL[0] = ((-2 * nu) * cLower1) + ((2 * nu) * cLower2);
-                            CL[ncols - 1] = ((-2 * nu) * cUpper1) + ((2 * nu) * cUpper2);
+                            CL = (-2 * nu * C1) + (2 * nu * C2); // + C3
+                            CL[0] = (-2 * nu * cLower1) + (2 * nu * cLower2);
+                            CL[ncols - 1] = (-2 * nu * cUpper1) + (2 * nu * cUpper2);
                             break;
                         default:
                             break;
@@ -404,7 +404,7 @@ namespace Diffusion2D_Library
                     }
 
                     //f12 = (tau / 2.0) * (fn + f0);
-                    f12 = (tau / 2.0) * fn;
+                    f12 = tau / 2.0 * fn;
 
                     // BCs
                     switch (BCs_Functions[0].TypeBC)
@@ -412,7 +412,7 @@ namespace Diffusion2D_Library
                         case ABoundaryCondition.dirichlet:
                             RVector gn = BCs_Functions[0].BoundaryFunction((t + 1) * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed);
                             RVector g0 = BCs_Functions[0].BoundaryFunction(t * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed);
-                            CT = ((0.5 * B.Dot(gn)) + (0.5 * A.Dot(g0))); ////((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
+                            CT = (0.5 * B.Dot(gn)) + (0.5 * A.Dot(g0)); ////((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
                             break;
                         case ABoundaryCondition.neumann:
                             RVector C1, C2; //,C3;
@@ -427,7 +427,7 @@ namespace Diffusion2D_Library
                                 C2 = C_Im2.GetRowVector(nrows - 2);
                             }
                             //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                            CT = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
+                            CT = (-2 * nu * C1) + (2 * nu * C2); // + C3
                             break;
                         default:
                             break;
@@ -437,7 +437,7 @@ namespace Diffusion2D_Library
                         case ABoundaryCondition.dirichlet:
                             RVector gn = BCs_Functions[3].BoundaryFunction((t + 1) * dt, BCs_Functions[3].PositionVaries, BCs_Functions[3].PositionFixed);
                             RVector g0 = BCs_Functions[3].BoundaryFunction(t * dt, BCs_Functions[3].PositionVaries, BCs_Functions[3].PositionFixed);
-                            CB = ((0.5 * B.Dot(gn)) + (0.5 * A.Dot(g0))); //((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
+                            CB = (0.5 * B.Dot(gn)) + (0.5 * A.Dot(g0)); //((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
                             break;
                         case ABoundaryCondition.neumann:
                             RVector C1, C2; //,C3;
@@ -452,7 +452,7 @@ namespace Diffusion2D_Library
                                 C2 = C_Im2.GetRowVector(1);
                             }
                             //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                            CB = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
+                            CB = (-2 * nu * C1) + (2 * nu * C2); // + C3
                             break;
                         default:
                             break;
@@ -496,7 +496,7 @@ namespace Diffusion2D_Library
                                 C2 = C_Im2.GetColVector(ncols - 2);
                             }
                             //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                            CR = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
+                            CR = (-2 * nu * C1) + (2 * nu * C2); // + C3
                             break;
                         default:
                             break;
@@ -524,7 +524,7 @@ namespace Diffusion2D_Library
                                 C2 = C_Im2.GetColVector(1);
                             }
                             //C3 = BCs[1].BoundaryFunction(t * dt, ncols);
-                            CL = ((-2 * nu) * C1) + ((2 * nu) * C2); // + C3
+                            CL = (-2 * nu * C1) + (2 * nu * C2); // + C3
                             break;
                         default:
                             break;

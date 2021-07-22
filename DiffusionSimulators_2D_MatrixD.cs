@@ -78,124 +78,144 @@ namespace Diffusion2D_Library
             // ====================================
             // Create the solver method matrices
             // ====================================
+            // Total points minus the left/right or up/down boundaries
+            int nx_less1 = nx - 2;
+            // nx_less1 - one point because the total entries are one fewer because these are on the off-diagonals
+            int nx_less2 = nx_less1 - 1;
+
+            int end_idx1 = nx_less2;
+            int end_idx2 = nx_less2 - 1;
+            int start_idx1 = 0;
+            int start_idx2 = 1;
+
             A = new TridiagonalMatrix[nx];
             B_row = new TridiagonalMatrix[nx];
             B_col = new TridiagonalMatrix[nx];
 
             double nu0 = dt / (2 * Math.Pow(dx, 2));
 
-            RVector nu = new(nx);
-            RVector off_d_val_l0 = new(nx - 1);
-            RVector off_d_val_u0 = new(nx - 1);
-            RVector main0 = new(nx);
-            RVector off_d_val_l1 = new(nx - 1);
-            RVector off_d_val_u1 = new(nx - 1);
-            RVector main1 = new(nx);
-            RVector off_d_val_l2 = new(nx - 1);
-            RVector off_d_val_u2 = new(nx - 1);
-            RVector main2 = new(nx);
+            RVector nu = new(nx_less1);
+            RVector off_d_val_l0 = new(nx_less2);
+            RVector off_d_val_u0 = new(nx_less2);
+            RVector main0 = new(nx_less1);
+            RVector off_d_val_l1 = new(nx_less2);
+            RVector off_d_val_u1 = new(nx_less2);
+            RVector main1 = new(nx_less1);
+            RVector off_d_val_l2 = new(nx_less2);
+            RVector off_d_val_u2 = new(nx_less2);
+            RVector main2 = new(nx_less1);
 
             double D_minus, D_plus;
-            for (int i = 0; i < nx; i++)
+            for (int i = 0; i < nx-1; i++)
             {
                 RVector D_row = D.GetRowVector(i);
+                double D0 = D_row[0];
+                double D1 = D_row[1];
+                double Dend = D_row[nx - 1];
+                double Dend1 = D_row[nx - 2];
 
                 // Working this for diffusion heterogeneous media
                 //================================================
                 // A Matrix first
                 //================================================
-                D_plus = 0.5 * (D_row[1] + D_row[0]);
-                main0[0] = 1.0 - ((D_plus * nu0));
+                #region A
+                D_plus = 0.5 * (D1 + D0);
+                main0[start_idx1] = 1.0 - 2.0 * D_plus * nu0;
 
-                D_minus = 0.5 * (D_row[nx - 2] + D_row[0]);
-                main0[nx - 1] = 1.0 - ((D_minus * nu0));
+                D_minus = 0.5 * (Dend1 + Dend);
+                main0[end_idx1] = 1.0 - 2.0 * D_minus * nu0;
                 
-                for (int j = 1; j < nx - 1; j++)
+                for (int j = start_idx2; j < end_idx1; j++)
                 {
                     D_minus = 0.5 * (D_row[j - 1] + D_row[j]);
                     D_plus = 0.5 * (D_row[j + 1] + D_row[j]);
                     main0[j] = 1.0 - ((D_minus * nu0) + (D_plus * nu0));
                 }
 
-                for (int j = 1; j < nx; j++)
+                for (int j = start_idx2; j < end_idx1+1; j++)
                 {
                     D_minus = 0.5 * ( D_row[j] + D_row[j - 1]);
                     off_d_val_l0[j - 1] = nu0 * D_minus;
                 }
 
-                for (int j = 0; j < nx - 1; j++)
+                for (int j = start_idx1; j < end_idx1; j++)
                 {
                     D_plus = 0.5 * (D_row[j + 1] + D_row[j]);
                     off_d_val_u0[j] = nu0 * D_plus;
                 }
 
                 A[i] = new TridiagonalMatrix(main0, off_d_val_l0, off_d_val_u0);
+                #endregion
                 ////================================================
                 //// The B-row Matrix next
                 ////================================================
-                //main = 1 + (2 * nu);
+                #region B_row
+                D_plus = 0.5 * (D1 + D0);
+                main1[start_idx1] = 1.0 + 2.0 * D_plus * nu0;
 
-                D_plus = 0.5 * (D_row[1] + D_row[0]);
-                main1[0] = 1.0 + ((D_plus * nu0));
+                D_minus = 0.5 * (Dend1 + Dend);
+                main1[end_idx1] = 1.0 + 2.0 * D_minus * nu0;
 
-                D_minus = 0.5 * (D_row[nx - 2] + D_row[0]);
-                main1[nx - 1] = 1.0 + ((D_minus * nu0));
-
-                for (int j = 1; j < nx - 1; j++)
+                for (int j = start_idx2; j < end_idx1; j++)
                 {
                     D_minus = 0.5 * (D_row[j - 1] + D_row[j]);
                     D_plus = 0.5 * (D_row[j + 1] + D_row[j]);
                     main1[j] = 1.0 + ((D_minus * nu0) + (D_plus * nu0));
                 }
 
-                for (int j = 1; j < nx; j++)
+                for (int j = start_idx2; j < end_idx1+1; j++)
                 {
                     D_minus = 0.5 * (D_row[j - 1] + D_row[j]);
                     off_d_val_l1[j - 1] = -nu0 * D_minus;
                 }
 
-                for (int j = 0; j < nx - 1; j++)
+                for (int j = start_idx1; j < end_idx1; j++)
                 {
                     D_plus = 0.5 * (D_row[j + 1] + D_row[j]);
                     off_d_val_u1[j] = -nu0 * D_plus;
                 }
 
                 B_row[i] = new TridiagonalMatrix(main1, off_d_val_l1, off_d_val_u1);
+                #endregion
                 ////================================================
                 //// The B-column Matrix last
                 ////================================================
+                #region B_col
                 RVector D_col = D.GetColVector(i);
-               
-                D_plus = 0.5 * (D_col[1] + D_col[0]);
-                main2[0] = 1.0 + ((D_plus * nu0));
+                D0 = D_col[0];
+                D1 = D_col[1];
+                Dend = D_col[nx - 1];
+                Dend1 = D_col[nx - 2];
 
-                D_minus = 0.5 * (D_col[nx - 2] + D_col[0]);
-                main2[nx - 1] = 1.0 + ((D_minus * nu0));
+                D_plus = 0.5 * (D1 + D0);
+                main2[start_idx1] = 1.0 + 2.0 * D_plus * nu0;
 
-                for (int j = 1; j < nx - 1; j++)
+                D_minus = 0.5 * (Dend1 + Dend);
+                main2[end_idx1] = 1.0 + 2.0 * D_minus * nu0;
+
+                for (int j = start_idx2; j < end_idx1; j++)
                 {
                     D_minus = 0.5 * (D_col[j - 1] + D_col[j]);
                     D_plus = 0.5 * (D_col[j + 1] + D_col[j]);
                     main2[j] = 1.0 + ((D_minus * nu0) + (D_plus * nu0));
                 }
 
-                for (int j = 1; j < nx; j++)
+                for (int j = start_idx2; j < end_idx1+1; j++)
                 {
                     D_minus = 0.5 * (D_col[j - 1] + D_col[j]);
                     off_d_val_l2[j - 1] = -nu0 * D_minus;
                 }
 
-                for (int j = 0; j < nx - 1; j++)
+                for (int j = start_idx1; j < end_idx1; j++)
                 {
                     D_plus = 0.5 * (D_col[j + 1] + D_col[j]);
                     off_d_val_u2[j] = -nu0 * D_plus;
                 }
 
-                ////for (int j = 0; j < nx - 1; j++) { off_d_val_l[j] = nu[j]; }
-                ////for (int j = 1; j < nx; j++) { off_d_val_u[j - 1] = nu[j]; }
-
                 B_col[i] = new TridiagonalMatrix(main2, off_d_val_l2, off_d_val_u2);
+                #endregion
             }
+
             // ====================================
             // Set-up the initial condition function and start establishing the initial composition field
             // ===================================
@@ -238,10 +258,10 @@ namespace Diffusion2D_Library
                         {   
                             border_with_function[i].PositionVaries = X.GetRowVector(X.GetnRows - 1);
                             border_with_function[i].PositionFixed = Y[X.GetnRows - 1, 0];
-                            //C0 = border_with_function[i].BoundaryFunction(0.0, border_with_function[i].PositionVaries, border_with_function[i].PositionFixed);
+                            C0 = border_with_function[i].BoundaryFunction(0.0, border_with_function[i].PositionVaries, border_with_function[i].PositionFixed);
 
-                            //RVector Ctab = C_Initial.GetRowVector(ny - 1) + C0;
-                            //C_Initial.ReplaceRow(C0, ny - 1);
+                            RVector Ctab = C_Initial.GetRowVector(ny - 1) + C0;
+                            C_Initial.ReplaceRow(C0, ny - 1);
                             //Console.WriteLine(C0[0].ToString() + "Neumann Top!");
                         }
                         break;
@@ -402,8 +422,8 @@ namespace Diffusion2D_Library
                                 cUpper2 = C_Im2[nrows - 2, ncols - 2];
                             }
                             CR = RVector.Product(-2 * nu0 * cf_2D.DValues.GetColVector(ncols - 1), C1) + RVector.Product(2 * nu0 * cf_2D.DValues.GetColVector(ncols - 2), C2); // + C3                            
-                            CR[0] = ((-2 * nu0 * cf_2D.DValues[0, ncols - 1]) * cLower1) + ((2 * nu0 * cf_2D.DValues[1, ncols - 2]) * cLower2);
-                            CR[ncols - 1] = ((-2 * nu0 * cf_2D.DValues[nrows - 1, ncols - 1]) * cUpper1) + ((2 * nu0 * cf_2D.DValues[nrows - 2, ncols - 2]) * cUpper2);
+                            CR[0] = (-2 * nu0 * cf_2D.DValues[0, ncols - 1] * cLower1) + (2 * nu0 * cf_2D.DValues[1, ncols - 2] * cLower2);
+                            CR[ncols - 1] = (-2 * nu0 * cf_2D.DValues[nrows - 1, ncols - 1] * cUpper1) + (2 * nu0 * cf_2D.DValues[nrows - 2, ncols - 2] * cUpper2);
                             break;
                         default:
                             break;
@@ -437,8 +457,8 @@ namespace Diffusion2D_Library
                                 cUpper2 = C_Im2[nrows - 2, 1];
                             }
                             CL = RVector.Product(-2 * nu0 * cf_2D.DValues.GetColVector(0), C1) + RVector.Product(2 * nu0 * cf_2D.DValues.GetColVector(1), C2); // + C3
-                            CL[0] = ((-2 * nu0 * cf_2D.DValues[0, 0]) * cLower1) + ((2 * nu0 * cf_2D.DValues[1, 1]) * cLower2);
-                            CL[ncols - 1] = ((-2 * nu0 * cf_2D.DValues[nrows - 1, 0]) * cUpper1) + ((2 * nu0 * cf_2D.DValues[nrows - 2, 1]) * cUpper2);
+                            CL[0] = (-2 * nu0 * cf_2D.DValues[0, 0] * cLower1) + (2 * nu0 * cf_2D.DValues[1, 1] * cLower2);
+                            CL[ncols - 1] = (-2 * nu0 * cf_2D.DValues[nrows - 1, 0] * cUpper1) + (2 * nu0 * cf_2D.DValues[nrows - 2, 1] * cUpper2);
                             break;
 
                         default:
@@ -475,9 +495,6 @@ namespace Diffusion2D_Library
                         C_Ex[i, 0] = CL[i]; //nu *
                         C_Ex[i, ncols - 1] = CR[i]; //nu *                        
                     }
-                    //Console.WriteLine(t.ToString() + "s");
-                    //Console.WriteLine(BCs_Functions[0].BoundaryFunction(t * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed)[0].ToString());
-                    //Console.ReadKey();
                     // ===================
                     // ===================
                     // One-half implicit time-step
@@ -487,7 +504,7 @@ namespace Diffusion2D_Library
                     if (t == 0) { fn = gxt_function(X, Y, t12, cf_2D.DValues, C_Initial); }
                     else { fn = gxt_function(X, Y, t12, cf_2D.DValues, C_Im2); }
 
-                    f12 = (dt / 2.0) * fn;
+                    f12 = dt / 2.0 * fn;
 
                     // BCs
                     switch (BCs_Functions[0].TypeBC)
@@ -495,7 +512,7 @@ namespace Diffusion2D_Library
                         case ABoundaryCondition.dirichlet:
                             RVector gn = BCs_Functions[0].BoundaryFunction((t + 1) * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed);
                             RVector g0 = BCs_Functions[0].BoundaryFunction(t * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed);
-                            CT = ((0.5 * B_row[nrows - 1].Dot(gn)) + (0.5 * A[nrows - 1].Dot(g0)));  
+                            CT = (0.5 * B_row[nrows - 1].Dot(gn)) + (0.5 * A[nrows - 1].Dot(g0));  
                             break;
                         case ABoundaryCondition.neumann:
                             RVector C1, C2; //,C3;
@@ -532,7 +549,7 @@ namespace Diffusion2D_Library
                         case ABoundaryCondition.dirichlet:
                             RVector gn = BCs_Functions[3].BoundaryFunction((t + 1) * dt, BCs_Functions[3].PositionVaries, BCs_Functions[3].PositionFixed);
                             RVector g0 = BCs_Functions[3].BoundaryFunction(t * dt, BCs_Functions[3].PositionVaries, BCs_Functions[3].PositionFixed);
-                            CB = ((0.5 * B_row[0].Dot(gn)) + (0.5 * A[0].Dot(g0))); //((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
+                            CB = (0.5 * B_row[0].Dot(gn)) + (0.5 * A[0].Dot(g0)); //((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
                             break;
                         case ABoundaryCondition.neumann:
                             RVector C1, C2; //,C3;

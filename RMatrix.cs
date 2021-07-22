@@ -642,7 +642,7 @@ namespace Diffusion2D_Library
             {
                 for (int j = 0; j < rm.GetnCols; j++)
                 {
-                    ma[i, j] = Math.Pow(-1, i + j) * (Determinant(Minor(rm, i, j)));
+                    ma[i, j] = Math.Pow(-1, i + j) * Determinant(Minor(rm, i, j));
                 }
             }
             return ma.GetTranspose();
@@ -656,7 +656,7 @@ namespace Diffusion2D_Library
             {
                 throw new Exception("Cannot inverse a matrix with 0 determinant!");
             }
-            return (Adjoint(rm) / Dm);
+            return Adjoint(rm) / Dm;
         }
         public static RMatrix InverseAccurate(RMatrix rm)
         {
@@ -811,7 +811,7 @@ namespace Diffusion2D_Library
                     {
                         // Evaluating L(i, j)
                         // using L(j, j)
-                        for (int k = 0; k < j; k++) { sum += (lower[i, k] * lower[j, k]); }
+                        for (int k = 0; k < j; k++) { sum += lower[i, k] * lower[j, k]; }
                         lower[i, j] = (rm[i, j] - sum) / lower[j, j];
                     }
                 }
@@ -910,7 +910,7 @@ namespace Diffusion2D_Library
                     sum = b[i, 0];
                     for (int j = 0; j < ncols; j++)
                     {
-                        if (j != i) { sum -= (A[i, j] * x[j]); }
+                        if (j != i) { sum -= A[i, j] * x[j]; }
                     }
                     x[i] = sum / A[i, i];
                 }
