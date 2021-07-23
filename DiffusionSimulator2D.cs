@@ -119,12 +119,23 @@ namespace Diffusion2D_Library
         internal BoundaryWithVector[] border_with_vector;
         internal Mode text_mode;
         internal bool error_flag = false;
+        internal int nx, ny, nx_less1, nx_less2, nx_less3, end_idx1, end_idx2, start_idx1, start_idx2;
         public Del_IC_xy I0;
         public Del_Source_MatrixD gxt_function;
         public Del_Source_xy gxt_xy;
         public RMatrix gxt_matrix;
 
         // Properties
+        public int NX
+        {
+            get => nx;
+            set => nx = value;
+        }
+        public int NY
+        {
+            get => ny;
+            set => ny = value;
+        }
         public RMatrix C_Initial
         {            
             get => cf_2D.InitialCompositionValues;

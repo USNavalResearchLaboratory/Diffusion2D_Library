@@ -14,9 +14,9 @@ namespace Diffusion2D_Library
         // Fields
         private readonly int nRows;
         private readonly int nCols;
-        private readonly RVector main;
-        private readonly RVector lower;
-        private readonly RVector upper;
+        private RVector main;
+        private RVector lower;
+        private RVector upper;
 
         // Constructors
         public TridiagonalMatrix(int nRows, int nCols)
@@ -72,6 +72,18 @@ namespace Diffusion2D_Library
         { get { return nRows; } }
         public int GetnCols
         { get { return nCols; } }
+        public RVector GetMain()
+        {
+            return main;
+        }
+        public RVector GetUpper()
+        {
+            return upper;
+        }
+        public RVector GetLower()
+        {
+            return lower;
+        }
 
         // Indexers
         public double this[int col_idx, int row_idx]
@@ -107,6 +119,12 @@ namespace Diffusion2D_Library
                 //    //Console.WriteLine("Trying to set a value outside of the tridiagonal band.");
                 //}
             }
+        }
+        public void FitMainUpperLower(int mi, int me, int ui, int ue, int li, int le, RVector m, RVector u, RVector l)
+        {
+            for (int i = mi; i < me; i++) { main[i] = m[i - mi]; }
+            for (int i = ui; i < ue; i++) { upper[i] = u[i - ui]; }
+            for (int i = li; i < le; i++) { lower[i] = l[i - li]; }
         }
 
         // Methods

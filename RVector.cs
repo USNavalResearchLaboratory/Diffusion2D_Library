@@ -49,6 +49,16 @@ namespace Diffusion2D_Library
         {
             get { return ndim; }
         }
+        public RVector Section(int si, int ei)
+        {
+            if (ei > ndim || si > ndim) { throw new Exception("indices are out of range!"); }
+            if (ei < si) { int hold = si; si = ei; ei = hold; }
+            int length = ei - si;
+            RVector rv = new(length);
+            for (int i = si; i < ei; i++) { rv[i - si] = vector[i]; }
+
+            return rv;
+        }
         // Override Methods
         public override string ToString()
         {
