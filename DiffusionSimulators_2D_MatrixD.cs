@@ -410,7 +410,7 @@ namespace Diffusion2D_Library
                         if (BCs_Functions[1].TypeBC == ABoundaryCondition.neumann) { holdA1 = A[i][end_idx1, end_idx1]; A[i][end_idx1, end_idx1] = NeumannBCs_R_A[i]; }
 
                         RVector v1 = A[i].Dot(xold);
-                        C_Ex.ReplaceRow(v1, i, start_idx2, end_idx1);
+                        C_Ex.ReplaceRow(v1, i, start_idx2, nx_less1);
 
                         switch (BCs_Functions[2].TypeBC)
                         {
@@ -662,9 +662,9 @@ namespace Diffusion2D_Library
                             C_Im2.ReplaceRow(CT, nrows - 1);
                             break;
                         case ABoundaryCondition.neumann:
-                            CT = C_Im2.GetRowVector(nrows - 2);
-                            CB = C_Im2.GetRowVector(nrows - 4);
-                            C_Im2.ReplaceRow((CT - CB) / (2 * dy), nrows - 1);
+                            CT = BCs_Functions[0].BoundaryFunction(t * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed);
+                            CB = C_Im2.GetRowVector(nrows - 2);
+                            C_Im2.ReplaceRow(CT * dy + CB, nrows - 1);
                             break;
                     }
                     switch (BCs_Functions[3].TypeBC)
@@ -674,9 +674,10 @@ namespace Diffusion2D_Library
                             C_Im2.ReplaceRow(CB, 0);
                             break;
                         case ABoundaryCondition.neumann:
-                            CB = C_Im2.GetRowVector(1);
-                            CT = C_Im2.GetRowVector(3);
-                            C_Im2.ReplaceRow((CT - CB) / (2 * dy), 0);
+                            CT = C_Im2.GetRowVector(1);
+                            CB = BCs_Functions[3].BoundaryFunction(t * dt, BCs_Functions[3].PositionVaries, BCs_Functions[3].PositionFixed);
+
+                            C_Im2.ReplaceRow(CB * dy + CT, 0);
                             break;
                     }
                     // ===================
