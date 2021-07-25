@@ -569,8 +569,8 @@ namespace Diffusion2D_Library
                         RVector v1 = C_Ex.GetRowVector(k);
                         RVector u12 = C_Im1.GetRowVector(k);
                         RVector b = (2 * u12) - v1;
-                        if (k < CL.GetRVectorSize) { b[0] = CL[k]; b[nrows - 1] = CR[k]; }
-                        else { b[0] = CL[1]; b[nrows - 1] = CR[CR.GetRVectorSize - 1]; }
+                        //if (k < CL.GetRVectorSize) { b[0] = CL[k]; b[nrows - 1] = CR[k]; }
+                        //else { b[0] = CL[1]; b[nrows - 1] = CR[CR.GetRVectorSize - 1]; }
 
                         RVector b2, u1;
                         double s = -B_row[k][1, 2];
@@ -632,8 +632,17 @@ namespace Diffusion2D_Library
                         else
                         {
                             b2 = b;
-                            b2[0] = 2 * s * dx * b[0];
-                            b2[b2.GetRVectorSize - 1] = 2 * s * dx * b[nx_less1];
+                            if (k < CL.GetRVectorSize)
+                            {
+                                b2[0] = 2 * s * dx * CL[k] + b[0];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[k] + b[b.GetRVectorSize - 1];
+                            }
+                            else
+                            {
+                                b2[0] = 2 * s * dx * CL[1] + b[0];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 1];
+                            }
+
 
                             B_row2 = new(b2.GetRVectorSize, b2.GetRVectorSize);
                             B_row2.FitMainUpperLower(start_idx2, nx_less1, start_idx2, nx_less1 - 1, start_idx2, nx_less1 - 1, B_row[k].GetMain(), B_row[k].GetUpper(), B_row[k].GetLower());
@@ -643,8 +652,8 @@ namespace Diffusion2D_Library
                             B_row2[1, 0] = B_row2[1, 2];
 
                             B_row2[nx_less1, nx_less2] = -2 * s;
-                            B_row2[nx_less1, nx_less1] = B_row2[nx_less3, nx_less3];
-                            B_row2[nx_less2, nx_less1] = B_row2[nx_less3, nx_less3 - 1];
+                            B_row2[nx_less1, nx_less1] = B_row2[nx_less2, nx_less2];
+                            B_row2[nx_less2, nx_less1] = B_row2[nx_less2, nx_less2 - 1];
 
                             u1 = TridiagonalMatrix.Thomas_Algorithm(B_row2, b2);
 
