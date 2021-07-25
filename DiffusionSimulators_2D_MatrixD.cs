@@ -469,6 +469,8 @@ namespace Diffusion2D_Library
                         RVector f12s = f12.GetColVector(j);
                         RVector v2, u12;
                         double s = -B_col[j][1, 2];
+
+                        // Bottom dirichlet, Top dirichlet
                         if (BCs_Functions[3].TypeBC == ABoundaryCondition.dirichlet && BCs_Functions[0].TypeBC == ABoundaryCondition.dirichlet) 
                         {
                             v2 = (v1 + f12s).Section(start_idx2, nx_less1);
@@ -483,6 +485,7 @@ namespace Diffusion2D_Library
                             C_Im1[0, j] = CB[j];
                             C_Im1[nrows - 1, j] = CT[j];
                         }
+                        // Bottom neumann, Top dirichlet
                         else if (BCs_Functions[3].TypeBC == ABoundaryCondition.neumann && BCs_Functions[0].TypeBC == ABoundaryCondition.dirichlet) 
                         { 
                             v2 = (v1 + f12s).Section(start_idx1, nx_less1);
@@ -497,123 +500,53 @@ namespace Diffusion2D_Library
 
                             u12 = TridiagonalMatrix.Thomas_Algorithm(B_col2, v2);
                             
-                            int ns = (nrows - 1) - u12.GetRVectorSize;
-                            C_Im1.ReplaceCol(u12, j, 0, u12.GetRVectorSize);
+                            int ns = start_idx1;
+                            C_Im1.ReplaceCol(u12, j, ns, u12.GetRVectorSize);
                             C_Im1[nrows - 1, j] = CT[j];
                         }
+                        // Bottom dirichlet, Top neumann
                         else if (BCs_Functions[3].TypeBC == ABoundaryCondition.dirichlet && BCs_Functions[0].TypeBC == ABoundaryCondition.neumann) 
                         { 
-                            v2 = (v1 + f12s).Section(start_idx1, NX); 
+                            v2 = (v1 + f12s).Section(start_idx2, NX);
+                            v2[0] = s * (v1[0] + f12s[0]);
+                            v2[v2.GetRVectorSize - 1] = 2 * s * dx * (v1[nx_less1] + f12s[nx_less1]);
+
+                            B_col2 = new(v2.GetRVectorSize, v2.GetRVectorSize);
+                            B_col2.FitMainUpperLower(start_idx1, nx_less2, start_idx1, nx_less2 - 1, start_idx1, nx_less2 - 1, B_col[j].GetMain(), B_col[j].GetUpper(), B_col[j].GetLower());
+                            B_col2[nx_less2, nx_less3] = -2 * s;
+                            B_col2[nx_less2, nx_less2] = B_col2[nx_less3, nx_less3];
+                            B_col2[nx_less3, nx_less2] = B_col2[nx_less3, nx_less3 - 1];
+
+                            u12 = TridiagonalMatrix.Thomas_Algorithm(B_col2, v2);
+
+                            int ns = start_idx2;
+                            C_Im1.ReplaceCol(u12, j, ns, u12.GetRVectorSize);
+                            C_Im1[0, j] = CB[j];
                         }
+                        // Bottom neumann, top neumann
                         else 
                         { 
-                            v2 = v1; 
-                        }
+                            v2 = v1 + f12s;
+                            v2[0] = 2 * s * dx * (v1[0] + f12s[0]);
+                            v2[v2.GetRVectorSize - 1] = 2 * s * dx * (v1[nx_less1] + f12s[nx_less1]);
 
-            
-                        
-                        //v2[0] = 
+                            B_col2 = new(v2.GetRVectorSize, v2.GetRVectorSize);
+                            B_col2.FitMainUpperLower(start_idx2, nx_less1, start_idx2, nx_less1 - 1, start_idx2, nx_less1 - 1, B_col[j].GetMain(), B_col[j].GetUpper(), B_col[j].GetLower());
+                            
+                            B_col2[0, 1] = -2 * s;
+                            B_col2[0, 0] = B_col2[1, 1];
+                            B_col2[1, 0] = B_col2[1, 2];
 
-                        switch (BCs_Functions[0].TypeBC)
-                        {
-                            case ABoundaryCondition.dirichlet:
-                                B_col[j][0, 0] = 1.0;
-                                B_col[j][0, 1] = 0.0;
-                                break;
-                            case ABoundaryCondition.neumann:
-                                B_col[j][0, 0] = nu0;
-                                //B_col[j][0, 1] = -nu0;
-                                break;
-                            default:
-                                B_col[j][0, 0] = 1.0;
-                                B_col[j][0, 1] = 0.0;
-                                break;
-                        }
-                        switch (BCs_Functions[3].TypeBC)
-                        {
-                            case ABoundaryCondition.dirichlet:
-                                B_col[j][ncols - 1, ncols - 1] = 1.0;
-                                B_col[j][ncols - 1, ncols - 2] = 0.0;
-                                break;
-                            case ABoundaryCondition.neumann:
-                                B_col[j][ncols - 1, ncols - 1] = nu0;
-                                //B_col[j][0, 1] = -nu0;
-                                break;
-                            default:
-                                B_col[j][ncols - 1, ncols - 1] = 1.0;
-                                B_col[j][ncols - 1, ncols - 2] = 0.0;
-                                break;
-                        }
-                        
-                        
+                            B_col2[nx_less1, nx_less2] = -2 * s;
+                            B_col2[nx_less1, nx_less1] = B_col2[nx_less3, nx_less3];
+                            B_col2[nx_less2, nx_less1] = B_col2[nx_less3, nx_less3 - 1];
+
+                            u12 = TridiagonalMatrix.Thomas_Algorithm(B_col2, v2);
+
+                            int ns = start_idx1;
+                            C_Im1.ReplaceCol(u12, j, ns, u12.GetRVectorSize);
+                        }                                               
                     }
-                    //switch (BCs_Functions[0].TypeBC)
-                    //{
-                    //    case ABoundaryCondition.dirichlet:
-                    //        RVector gn = BCs_Functions[0].BoundaryFunction((t + 1) * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed);
-                    //        RVector g0 = BCs_Functions[0].BoundaryFunction(t * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed);
-                    //        CT = (0.5 * B_row[nrows - 1].Dot(gn)) + (0.5 * A[nrows - 1].Dot(g0));
-                    //        break;
-                    //    case ABoundaryCondition.neumann:
-                    //        RVector C1, C2; //,C3;
-                    //        double cUpper1, cUpper2, cLower1, cLower2;
-                    //        if (t == 0)
-                    //        {
-                    //            C1 = C_Initial.GetRowVector(nrows - 1);
-                    //            C2 = C_Initial.GetRowVector(nrows - 2);
-
-                    //            cLower1 = C_Initial[0, ncols - 1];
-                    //            cLower2 = C_Initial[1, ncols - 2];
-                    //            cUpper1 = C_Initial[nrows - 1, ncols - 1];
-                    //            cUpper2 = C_Initial[nrows - 2, ncols - 2];
-                    //        }
-                    //        else
-                    //        {
-                    //            C1 = C_Im2.GetRowVector(nrows - 1);
-                    //            C2 = C_Im2.GetRowVector(nrows - 2);
-
-                    //            cLower1 = C_Im2[0, ncols - 1];
-                    //            cLower2 = C_Im2[1, ncols - 2];
-                    //            cUpper1 = C_Im2[nrows - 1, ncols - 1];
-                    //            cUpper2 = C_Im2[nrows - 2, ncols - 2];
-                    //        }
-                    //        CT0 = RVector.Product(-2 * nu0 * cf_2D.DValues.GetRowVector(nrows - 1), C1) + RVector.Product(2 * nu0 * cf_2D.DValues.GetRowVector(nrows - 2), C2); // + C3
-                    //        CT1 = A[nrows - 1].Dot(RVector.Product(-2 * nu0 * cf_2D.DValues.GetRowVector(nrows - 1), C1) + RVector.Product(2 * nu0 * cf_2D.DValues.GetRowVector(nrows - 2), C2)); // + C3
-                    //        CT = (0.5 * CT0) + (0.5 * CT1);
-                    //        break;
-                    //    default:
-                    //        break;
-                    //}
-                    //switch (BCs_Functions[3].TypeBC)
-                    //{
-                    //    case ABoundaryCondition.dirichlet:
-                    //        RVector gn = BCs_Functions[3].BoundaryFunction((t + 1) * dt, BCs_Functions[3].PositionVaries, BCs_Functions[3].PositionFixed);
-                    //        RVector g0 = BCs_Functions[3].BoundaryFunction(t * dt, BCs_Functions[3].PositionVaries, BCs_Functions[3].PositionFixed);
-                    //        CB = (0.5 * B_row[0].Dot(gn)) + (0.5 * A[0].Dot(g0)); //((0.5 * Bm.Dot(gn)) + (0.5 * Bp.Dot(g0))); //nu * 
-                    //        break;
-                    //    case ABoundaryCondition.neumann:
-                    //        RVector C1, C2; //,C3;
-                    //        if (t == 0)
-                    //        {
-                    //            C1 = C_Initial.GetRowVector(0);
-                    //            C2 = C_Initial.GetRowVector(1);
-                    //        }
-                    //        else
-                    //        {
-                    //            C1 = C_Im2.GetRowVector(0);
-                    //            C2 = C_Im2.GetRowVector(1);
-                    //        }
-                    //        CB0 = RVector.Product(-2 * nu0 * cf_2D.DValues.GetRowVector(0), C1) + RVector.Product(2 * nu0 * cf_2D.DValues.GetRowVector(1), C2); // + C3
-                    //        CB1 = A[nrows - 1].Dot(RVector.Product(-2 * nu0 * cf_2D.DValues.GetRowVector(0), C1) + RVector.Product(2 * nu0 * cf_2D.DValues.GetRowVector(1), C2)); // + C3
-                    //        CB = (0.5 * CB0) + (0.5 * CB1);
-                    //        //Console.WriteLine(CB.ToString());
-                    //        //Console.ReadKey();
-                    //        break;
-                    //    default:
-                    //        break;
-                    //}
-
-
                     // ===================
                     // ===================
                     // Full implicit time-step
