@@ -93,7 +93,7 @@ public void Test_2D_DiffusionSimulation()
             {
                 for (int j = 0; j < NY; j++)
                 {
-                    D[i, j] = 1.0e-8;
+                    D[i, j] = 1.0e-8;          // cm2/sec
                 }
             }
             // Create a simulator for 2D Diffusion 
@@ -102,6 +102,7 @@ public void Test_2D_DiffusionSimulation()
 
             // Solve the diffusion equation for the given initial and boundary conditions
             diffusionSimulator_2D.Solve(NT, Output);
+            // Note that the final composition field is stored as a property of the diffusion simulator class.  Intermediate composition fields were output to files during the simulation
         }
 ~~~
 The source term function, initial condition function, and boundary condition functions are specified in the following manner:
