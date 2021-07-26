@@ -607,12 +607,12 @@ namespace Diffusion2D_Library
                             //b2[b2.GetRVectorSize - 1] = s * b[nx_less1];
                             if (k < CL.GetRVectorSize)
                             {
-                                b2[0] = 2 * s * dx * CL[k] + b[0];
+                                b2[0] = 2 * s * dx * CL[k] + b[1];
                                 b2[b2.GetRVectorSize - 1] = s * CR[k] + b[b.GetRVectorSize - 1];
                             }
                             else
                             {
-                                b2[0] = 2 * s * dx * CL[1] + b[0];
+                                b2[0] = 2 * s * dx * CL[1] + b[1];
                                 b2[b2.GetRVectorSize - 1] = s * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 1];
                             }
 
@@ -638,12 +638,12 @@ namespace Diffusion2D_Library
                             if (k < CL.GetRVectorSize)
                             {
                                 b2[0] = s * b[0] + b[0];
-                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[k] + b[b.GetRVectorSize - 1];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[k] + b[b.GetRVectorSize - 2];
                             }
                             else
                             {
                                 b2[0] = s * b[1] + b[0];
-                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 1];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 2];
                             }
 
                             B_row2 = new(b2.GetRVectorSize, b2.GetRVectorSize);
@@ -665,13 +665,13 @@ namespace Diffusion2D_Library
                             b2 = b;
                             if (k < CL.GetRVectorSize)
                             {
-                                b2[0] = 2 * s * dx * CL[k] + b[0];
-                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[k] + b[b.GetRVectorSize - 1];
+                                b2[0] = 2 * s * dx * CL[k] + b[1];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[k] + b[b.GetRVectorSize - 2];
                             }
                             else
                             {
-                                b2[0] = 2 * s * dx * CL[1] + b[0];
-                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 1];
+                                b2[0] = 2 * s * dx * CL[1] + b[1];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 2];
                             }
 
 
@@ -704,7 +704,7 @@ namespace Diffusion2D_Library
                         case ABoundaryCondition.neumann:
                             CT = BCs_Functions[0].BoundaryFunction(t * dt, BCs_Functions[0].PositionVaries, BCs_Functions[0].PositionFixed);
                             CB = C_Im2.GetRowVector(nrows - 2);
-                            C_Im2.ReplaceRow(CT * dy + CB, nrows - 1);
+                            C_Im2.ReplaceRow(CT * 2 * dy + CB, nrows - 1);
                             break;
                     }
                     switch (BCs_Functions[3].TypeBC)
@@ -717,7 +717,7 @@ namespace Diffusion2D_Library
                             CT = C_Im2.GetRowVector(1);
                             CB = BCs_Functions[3].BoundaryFunction(t * dt, BCs_Functions[3].PositionVaries, BCs_Functions[3].PositionFixed);
 
-                            C_Im2.ReplaceRow(CB * dy + CT, 0);
+                            C_Im2.ReplaceRow(CB * 2 * dy + CT, 0);
                             break;
                     }
                     // ===================
