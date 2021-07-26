@@ -435,8 +435,8 @@ namespace Diffusion2D_Library
                                 break;
                         }
 
-                        //if (BCs_Functions[2].TypeBC == ABoundaryCondition.neumann) { A[i][start_idx1, start_idx1] = holdA0; }
-                        //if (BCs_Functions[1].TypeBC == ABoundaryCondition.neumann) { A[i][end_idx1, end_idx1] = holdA1; }
+                        if (BCs_Functions[2].TypeBC == ABoundaryCondition.neumann) { A[i][start_idx1, start_idx1] = holdA0; }
+                        if (BCs_Functions[1].TypeBC == ABoundaryCondition.neumann) { A[i][end_idx1, end_idx1] = holdA1; }
                     }
                     // ===================
                     // ===================
@@ -578,8 +578,19 @@ namespace Diffusion2D_Library
                         if (BCs_Functions[2].TypeBC == ABoundaryCondition.dirichlet && BCs_Functions[1].TypeBC == ABoundaryCondition.dirichlet)
                         {
                             b2 = b.Section(start_idx2, nx_less1);
-                            b2[0] = s * b[0];
-                            b2[b2.GetRVectorSize - 1] = s * b[nx_less1];
+                            //b2[0] = s * b[0];
+                            //b2[b2.GetRVectorSize - 1] = s * b[nx_less1];
+                            if (k < CL.GetRVectorSize)
+                            {
+                                b2[0] = s * b[0] + b[0];
+                                b2[b2.GetRVectorSize - 1] = s * CR[k] + b[b.GetRVectorSize - 1];
+                            }
+                            else
+                            {
+                                b2[0] = s * b[1] + b[0];
+                                b2[b2.GetRVectorSize - 1] = s * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 1];
+                            }
+
                             B_row2 = B_row[k];
 
                             u1 = TridiagonalMatrix.Thomas_Algorithm(B_row2, b2);
@@ -592,8 +603,18 @@ namespace Diffusion2D_Library
                         else if (BCs_Functions[2].TypeBC == ABoundaryCondition.neumann && BCs_Functions[1].TypeBC == ABoundaryCondition.dirichlet)
                         {
                             b2 = b.Section(start_idx1, nx_less1);
-                            b2[0] = 2 * s * dx * b[0];
-                            b2[b2.GetRVectorSize - 1] = s * b[nx_less1];
+                            //b2[0] = 2 * s * dx * b[0];
+                            //b2[b2.GetRVectorSize - 1] = s * b[nx_less1];
+                            if (k < CL.GetRVectorSize)
+                            {
+                                b2[0] = 2 * s * dx * CL[k] + b[0];
+                                b2[b2.GetRVectorSize - 1] = s * CR[k] + b[b.GetRVectorSize - 1];
+                            }
+                            else
+                            {
+                                b2[0] = 2 * s * dx * CL[1] + b[0];
+                                b2[b2.GetRVectorSize - 1] = s * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 1];
+                            }
 
                             B_row2 = new(b2.GetRVectorSize, b2.GetRVectorSize);
                             B_row2.FitMainUpperLower(start_idx2, nx_less1, start_idx2, nx_less1 - 1, start_idx2, nx_less1 - 1, B_row[k].GetMain(), B_row[k].GetUpper(), B_row[k].GetLower());
@@ -612,8 +633,18 @@ namespace Diffusion2D_Library
                         else if (BCs_Functions[3].TypeBC == ABoundaryCondition.dirichlet && BCs_Functions[0].TypeBC == ABoundaryCondition.neumann)
                         {
                             b2 = b.Section(start_idx2, NX);
-                            b2[0] = s * b[0];
-                            b2[b2.GetRVectorSize - 1] = 2 * s * dx * b[nx_less1];
+                            //b2[0] = s * b[0];
+                            //b2[b2.GetRVectorSize - 1] = 2 * s * dx * b[nx_less1];
+                            if (k < CL.GetRVectorSize)
+                            {
+                                b2[0] = s * b[0] + b[0];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[k] + b[b.GetRVectorSize - 1];
+                            }
+                            else
+                            {
+                                b2[0] = s * b[1] + b[0];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 1];
+                            }
 
                             B_row2 = new(b2.GetRVectorSize, b2.GetRVectorSize);
                             B_row2.FitMainUpperLower(start_idx1, nx_less2, start_idx1, nx_less2 - 1, start_idx1, nx_less2 - 1, B_row[k].GetMain(), B_row[k].GetUpper(), B_row[k].GetLower());
