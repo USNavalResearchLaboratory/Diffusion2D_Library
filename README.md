@@ -65,28 +65,29 @@ Once the library package has been added to a project, it can be invoked using th
 ~~~
 public void Test_2D_DiffusionSimulation()
         {
-            string filename = @"Data.dat";
             string base_name = "Base_Output_Name"; //the iteration number will be appended to the name
-            string diff_name = "DiffusivityValues.csv"; //  Outputs the diffusion coefficients;  Handy if they vary spatially
 
-            double L = 100.0e-4;
-            double H = 100.0e-4;
-            int NX = 50;
-            int NY = 50;
-            double dx = L / NX;
-            double dy = H / NY;
-            double dt = 1.0e-4;
-            double Duration = 1.0e3;
-            int NT = (int)(Duration / dt) + 1;
-            int Output = (int)(5.0 / dt);
-            Mode VMode = Mode.verbose;
+            double L = 100.0e-4;                // cm
+            double H = 100.0e-4;                // cm
+            int NX = 50;                        // Node number
+            int NY = 50;                        // Node number
+            double dx = L / NX;                 // cm
+            double dy = H / NY;                 // cm
+            double dt = 1.0e-4;                 // s
+            double Duration = 1.0e3;            // s
+            int NT = (int)(Duration / dt) + 1;  // Number of iterations
+            int Output = (int)(5.0 / dt);       // delay between writing output files, s
+            Mode VMode = Mode.verbose;          // Outputs 
             
             // Order of boundaries: Top, Right, Left, Bottom
             ABoundaryCondition[] BCs = new ABoundaryCondition[4] { ABoundaryCondition.dirichlet, ABoundaryCondition.neumann, ABoundaryCondition.neumann, ABoundaryCondition.neumann }; 
             Del_BC_xy[] All_BCs = new Del_BC_xy[4] { Boundary_2D_Constant, Boundary_2D_Zero, Boundary_2D_Zero, Boundary_2D_Zero };
+            
             Del_IC_xy IC2 = InitialCondition_2D_Zero;
+            
             Del_Source_MatrixD f = SourceTerm_2D_Zero;
 
+            // Specify the diffusion coefficient at each node
             RMatrix D = new(NX, NY);
             for (int i = 0; i < NX; i++)
             {
@@ -106,4 +107,13 @@ public void Test_2D_DiffusionSimulation()
 The source term function, initial condition function, and boundary condition functions are specified in the following manner:
 
 ### Source Term
+~~~
+        public static RMatrix SourceTerm_2D_Zero(RMatrix xposition, RMatrix yposition, double time, RMatrix D, RMatrix composition)
+        {
+            int nrows = xposition.GetnRows;
+            int ncols = xposition.GetnCols;
 
+            RMatrix C_field = new(nrows, ncols);
+            return C_field;
+        }
+~~~
