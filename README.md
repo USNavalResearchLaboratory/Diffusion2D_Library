@@ -77,7 +77,7 @@ public void Test_2D_DiffusionSimulation()
             double Duration = 1.0e3;            // s
             int NT = (int)(Duration / dt) + 1;  // Number of iterations
             int Output = (int)(5.0 / dt);       // delay between writing output files, s
-            Mode VMode = Mode.verbose;          // Outputs 
+            Mode VMode = Mode.verbose;          // Specifies whether output text is shown on the console
             
             // Order of boundaries: Top, Right, Left, Bottom
             ABoundaryCondition[] BCs = new ABoundaryCondition[4] { ABoundaryCondition.dirichlet, ABoundaryCondition.neumann, ABoundaryCondition.neumann, ABoundaryCondition.neumann }; 
@@ -115,5 +115,43 @@ The source term function, initial condition function, and boundary condition fun
 
             RMatrix C_field = new(nrows, ncols);
             return C_field;
+        }
+~~~
+
+### Initial Condiiton
+~~~
+        public static RMatrix InitialCondition_2D_Zero(RMatrix xposition, RMatrix yposition)
+        {
+            int nrows = xposition.GetnRows;
+            int ncols = xposition.GetnCols;
+            RMatrix composition_field = new(nrows, ncols);
+            return composition_field;
+        }
+~~~
+### Boundary Conditions
+1. Example of a constant function
+~~~
+        public static RVector Boundary_2D_Constant(double t, RVector SideNodes, double XorYPositionValue)
+        {
+            int n = SideNodes.GetRVectorSize;
+            RVector BC = new(n);
+            for (int i = 0; i < n; i++)
+            {
+                BC[i] = 1.0; 
+            }
+            return BC;
+        }
+~~~
+3. Example of a zero-valued function
+~~~
+        public static RVector Boundary_2D_Zero(double t, RVector SideNodes, double XorYPositionValue)
+        {
+            int n = SideNodes.GetRVectorSize;
+            RVector BC = new(n);
+            for (int i = 0; i < n; i++)
+            {
+                BC[i] = 0.0; 
+            }
+            return BC;
         }
 ~~~
