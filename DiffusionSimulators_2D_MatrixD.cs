@@ -665,13 +665,13 @@ namespace Diffusion2D_Library
                             b2 = b;
                             if (k < CL.GetRVectorSize)
                             {
-                                b2[0] = 2 * s * dx * CL[k]; // + b[0]
-                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[k]; // + b[b.GetRVectorSize - 1]
+                                b2[0] = 2 * s * dx * CL[k] + b[0];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[k] + b[b.GetRVectorSize - 1];
                             }
                             else
                             {
-                                b2[0] = 2 * s * dx * CL[1]; // + b[0]
-                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[CR.GetRVectorSize - 1]; // + b[b.GetRVectorSize - 1]
+                                b2[0] = 2 * s * dx * CL[1] + b[0];
+                                b2[b2.GetRVectorSize - 1] = 2 * s * dx * CR[CR.GetRVectorSize - 1] + b[b.GetRVectorSize - 1];
                             }
 
 
