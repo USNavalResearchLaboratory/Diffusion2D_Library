@@ -63,6 +63,13 @@ The Diffusion2D_Library package can be obtained by using the nuget package manag
 ## How to use the library
 Once the library package has been added to a project, it can be invoked using the following code:
 ~~~
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+using Diffusion2D_Library;
+using static Diffusion2D_Library.DiffusionSimulator2D;
+
 public void Test_2D_DiffusionSimulation()
         {
             string base_name = "Base_Output_Name"; //the iteration number will be appended to the name
