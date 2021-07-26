@@ -5,9 +5,9 @@ Solves the diffusion equation in 1 or 2 dimensions.
 ***
 
 <img src="2D_Region.png" width="400" align = "right">
-"Diffusion2D_Library" is a C# library for solving parabolic partial differential equations in 1 or 2 dimensions.  A representative region, &Omega;, in the cartesian plane, with boundary conditions specified on &delta;&Omega; and initial condition indicated, is shown to the right.  
+<p>"Diffusion2D_Library" is a C# library for solving parabolic partial differential equations in 1 or 2 dimensions.  A representative region, &Omega;, in the cartesian plane, with boundary conditions specified on &delta;&Omega; and initial condition indicated, is shown to the right.  </p>
 
-The classic examples for parabolic partial differential equations are the heat and the diffusion equations.  The forms for both equations are shown in Eq 1 and the solutions are subject to an initial and boundary conditions.  The differences lie in the physical interpretation of the terms that make up the &nu; parameter and the types of boundary conditions imposed.  We will focus on solutions to the diffusion equation in this write-up.
+<p>The classic examples for parabolic partial differential equations are the heat and the diffusion equations.  The forms for both equations are shown in Eq 1 and the solutions are subject to an initial and boundary conditions.  The differences lie in the physical interpretation of the terms that make up the &nu; parameter and the types of boundary conditions imposed.  We will focus on solutions to the diffusion equation in this write-up.</p>
 
 ***
 
