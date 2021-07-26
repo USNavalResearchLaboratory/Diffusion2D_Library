@@ -59,3 +59,51 @@ in 1 dimension:
 ***
 ## Installation
 The Diffusion2D_Library package can be obtained by using the nuget package manager in Visual Studio or by going to the NuGet [link](https://www.nuget.org/packages/Diffusion2D_Library/ "site") and using the provided commands.
+***
+## How to use the library
+Once the library package has been added to a project, it can be invoked using the following code:
+~~~
+public void Test_2D_DiffusionSimulation()
+        {
+            string filename = @"Data.dat";
+            string base_name = "Base_Output_Name"; //the iteration number will be appended to the name
+            string diff_name = "DiffusivityValues.csv"; //  Outputs the diffusion coefficients;  Handy if they vary spatially
+
+            double L = 100.0e-4;
+            double H = 100.0e-4;
+            int NX = 50;
+            int NY = 50;
+            double dx = L / NX;
+            double dy = H / NY;
+            double dt = 1.0e-4;
+            double Duration = 1.0e3;
+            int NT = (int)(Duration / dt) + 1;
+            int Output = (int)(5.0 / dt);
+            Mode VMode = Mode.verbose;
+            
+            // Order of boundaries: Top, Right, Left, Bottom
+            ABoundaryCondition[] BCs = new ABoundaryCondition[4] { ABoundaryCondition.dirichlet, ABoundaryCondition.neumann, ABoundaryCondition.neumann, ABoundaryCondition.neumann }; 
+            Del_BC_xy[] All_BCs = new Del_BC_xy[4] { Boundary_2D_Constant, Boundary_2D_Zero, Boundary_2D_Zero, Boundary_2D_Zero };
+            Del_IC_xy IC2 = InitialCondition_2D_Zero;
+            Del_Source_MatrixD f = SourceTerm_2D_Zero;
+
+            RMatrix D = new(NX, NY);
+            for (int i = 0; i < NX; i++)
+            {
+                for (int j = 0; j < NY; j++)
+                {
+                    D[i, j] = 1.0e-8;
+                }
+            }
+            // Create a simulator for 2D Diffusion 
+            DiffusionSimulators_2D_MatrixD diffusionSimulator_2D = new(D, dx, dx, NX, NY, dt, NT, BCs, All_BCs, IC2, f, VMode, base_name);
+
+
+            // Solve the diffusion equation for the given initial and boundary conditions
+            diffusionSimulator_2D.Solve(NT, Output);
+        }
+~~~
+The source term function, initial condition function, and boundary condition functions are specified in the following manner:
+
+### Source Term
+
