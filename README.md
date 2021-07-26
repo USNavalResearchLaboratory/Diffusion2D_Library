@@ -56,3 +56,6 @@ in 1 dimension:
 
 |9| &nu; = D&Delta;t/&Delta;x<sup>2</sup>|
 |-|--------------------------------------|
+***
+## Installation
+The Diffusion2D_Library package can be obtained by using the nuget package manager in Visual Studio or by going to the NuGet [link](https://www.nuget.org/packages/Diffusion2D_Library/ "site") and using the provided commands.
